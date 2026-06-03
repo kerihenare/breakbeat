@@ -1,0 +1,37 @@
+{
+  "name": "@kerihenare/breakbeat",
+  "description": "Breakbeat is a tool for finding content about a company",
+  "author": "Keri Henare <keri@henare.co.nz>",
+  "private": true,
+  "license": "MIT",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./src/main.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kerihenare/breakbeat.git"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --watch src/main.ts",
+    "lint": "biome lint --write .",
+    "lint:fix": "biome check --write .",
+    "test": "node --test \"src/**/*.test.ts\"",
+    "test:watch": "node --test --watch \"src/**/*.test.ts\"",
+    "db:reset": "rm -f data/breakbeat.db*"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.100.1",
+    "@tavily/core": "^0.7.5",
+    "express": "^5.2.1",
+    "nunjucks": "^3.2.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.1",
+    "@types/nunjucks": "^3.2.6",
+    "htmx.org": "^2.0.10",
+    "typescript": "^6.0.3"
+  },
+  "packageManager": "pnpm@11.5.1+sha512.93f7b57422ea7068257235b4c16eb60762eb68e1dc23723199cc739043ea9be2c4143274a399d8c6defa2b1176226d9ca1c4b63482d6200c1a8fbaa78c1d1485"
+}

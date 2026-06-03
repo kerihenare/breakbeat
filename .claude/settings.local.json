@@ -1,0 +1,19 @@
+{
+	"enabledPlugins": {
+		"coderabbit@claude-plugins-official": true,
+		"security-guidance@claude-plugins-official": true,
+		"serena@claude-plugins-official": true
+	},
+	"permissions": {
+		"allow": [
+			"Bash(textutil -convert txt -stdout \"docs/Head of Engineering Technical Exercise.docx\")",
+			"Bash(git add *)",
+			"Bash(git commit -m 'Adds design spec *)",
+			"Bash(grep *)",
+			"Bash(git -C /Users/kerihenare/Work/Drumbeat/breakbeat/main ls-files)",
+			"Bash(git -C /Users/kerihenare/Work/Drumbeat/breakbeat/main status --short)",
+			"Bash(git -C /Users/kerihenare/Work/Drumbeat/breakbeat/main diff --stat)",
+			"Bash(git *)"
+		]
+	}
+}

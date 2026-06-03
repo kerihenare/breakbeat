@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"exactOptionalPropertyTypes": true,
+		"isolatedModules": true,
+		"module": "nodenext",
+		"moduleDetection": "force",
+		"noEmit": true,
+		"noUncheckedIndexedAccess": true,
+		"noUncheckedSideEffectImports": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strict": true,
+		"target": "esnext",
+		"types": [],
+		"verbatimModuleSyntax": true
+	}
+}
