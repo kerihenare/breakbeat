@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
-import { runSearch } from "../search/tavily.js";
-import { transition } from "./queue.js";
-import { resolve } from "./resolve.js";
+import { runSearch } from "../search/tavily.ts";
+import { transition } from "./queue.ts";
+import { resolve } from "./resolve.ts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
