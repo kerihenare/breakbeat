@@ -1,4 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
+import { classify } from "../filter/classify.ts";
 import { applyHeuristics, collapse } from "../filter/heuristics.ts";
 import { runSearch } from "../search/tavily.ts";
 import { transition } from "./queue.ts";
@@ -86,8 +87,8 @@ export async function runPipeline(
 		transition(db, jobId, "classifying");
 
 		// ─── Stage 4: Classify ──────────────────────────────────────────────────
-		// Stub for now. TODO: Task 15 will implement real classification.
-		await sleep(500);
+		// Classify results: content type, confidence, and exclusion rules.
+		await classify(db, jobId, identity);
 
 		// ─── Finalize ───────────────────────────────────────────────────────────
 		finalize(db, jobId);
@@ -112,11 +113,4 @@ function finalize(db: DatabaseSync, jobId: number): void {
 	} else {
 		transition(db, jobId, "done");
 	}
-}
-
-/**
- * Utility: sleep for ms milliseconds.
- */
-function sleep(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
 }
