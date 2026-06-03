@@ -1,7 +1,7 @@
 # Breakbeat — Design Spec
 
 **Date:** 2026-06-03
-**Context:** 4-hour Head of Engineering technical exercise (see `head-of-engineering-technical-exercise.md`).
+**Context:** 4-hour Head of Engineering technical exercise (see `0-head-of-engineering-technical-exercise.md`).
 **Goal:** A pragmatic MVP web app that finds third-party content about a company from the last 36 months, demonstrating product judgement, architecture, retrieval strategy, background job design, deduplication, clear setup, and security/cost awareness.
 
 ## Key decisions
@@ -20,17 +20,17 @@
 A single Express app that does exactly the brief and nothing more:
 
 1. **One page**: input for company name and/or URL → "Start search" button.
-2. **POST /api/jobs** creates a job row, kicks off the pipeline in-process, returns `jobId` immediately.
+2. **POST /** creates company and job rows, kicks off the pipeline in-process, returns the list view.
 3. **Job pipeline** — each stage updates job status so the UI shows real progress:
    - **Resolve** — normalize company identity. If URL given, fetch homepage title/metadata to confirm name and capture own domains. If name only, use Tavily to find the homepage (needed for own-channel exclusion).
    - **Search** — ~6–8 parallel Tavily queries: per content type ("X press release", "X podcast interview", "X news"), with date filters for 36 months and `exclude_domains` for own site + aggregator blocklist.
    - **Filter (heuristics)** — drop own domains/subdomains, known aggregators (HN, Reddit, Slashdot…), URL-pattern ecommerce/review pages (`/product/`, `/vs/`, "best X alternatives" titles), out-of-window dates.
    - **Classify (LLM)** — one batched Claude Haiku call over surviving results (title+snippet+URL): assign content type, flag remaining exclusions, mark low-confidence items rather than silently dropping.
    - **Dedup** — exact URL dedup via DB unique constraint (after URL normalization: strip tracking params, trailing slashes), plus near-dup collapse on normalized title.
-4. **GET /api/jobs/:id** for status polling (simple 2s polling — SSE is a nice-to-have, not needed).
+4. **GET /:id** for status polling (simple 2s polling - real-time not needed).
 5. **Results list** — grouped/filterable by content type, showing title, source domain, date, snippet, confidence flag, link. "Reviewable" means a human can scan and judge quickly.
 
-That's the whole product. ~10 source files.
+That's the whole product.
 
 ## 2. Main trade-offs
 
@@ -47,15 +47,14 @@ That's the whole product. ~10 source files.
 
 ```
 src/
-  main.ts            # Express bootstrap, serves /public, mounts API
-  routes/jobs.ts     # POST /api/jobs, GET /api/jobs/:id (+results)
-  jobs/queue.ts      # tiny async queue, job state machine (pending→resolving→searching→filtering→classifying→done|failed)
-  jobs/pipeline.ts   # orchestrates the 5 stages
-  search/tavily.ts   # Tavily client + query strategy
+  main.ts               # Express bootstrap, serves /public, mounts API
+  routes/jobs.ts        # GET / (Jobs list + new job form), POST / (Returns same view as GET /), GET /:id (job results)
+  jobs/queue.ts         # tiny async queue, job state machine (pending→resolving→searching→filtering→classifying→done|failed)
+  jobs/pipeline.ts      # orchestrates the 5 stages
+  search/tavily.ts      # Tavily client + query strategy
   filter/heuristics.ts  # blocklists, URL/title rules, date window
   filter/classify.ts    # batched Anthropic call, validated output
-  db.ts              # node:sqlite schema: jobs, results (UNIQUE on normalized_url per job)
-public/index.html    # vanilla JS: form, status poller, results list
+  db.ts                 # node:sqlite schema: jobs, results (UNIQUE on normalized_url per job)
 ```
 
 ### Job state machine
