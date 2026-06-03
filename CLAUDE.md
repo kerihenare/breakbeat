@@ -37,9 +37,10 @@ Node.js v26 (`.nvmrc`) running TypeScript natively via type stripping — **eras
 
 ## Key Documents
 
-- `CONTEXT.md` — domain language; use its terms exactly (Job, Result, Exclusion, Collapse, Own Channel, Warning)
+- `CONTEXT.md` — domain language; use its terms exactly (Job, Resolved Identity, Own Channel, Result, Exclusion, Collapse, Content Type, Warning, Angle Query)
 - `docs/0-brief.md` — original exercise brief
 - `docs/1-spec.md` — design spec (source of truth for architecture, pipeline stages, trade-offs)
+- `docs/2-plan.md` — implementation plan (checkbox-tracked tasks; where the spec and plan disagree, the spec wins)
 
 ## Environment
 

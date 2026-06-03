@@ -1,0 +1,5 @@
+{
+  "enabledPlugins": {
+    "amazon-location-service@claude-plugins-official": true
+  }
+}
