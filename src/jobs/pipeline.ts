@@ -1,146 +1,93 @@
 import type { DatabaseSync } from "node:sqlite";
+import { runSearch } from "../search/tavily.js";
 import { transition } from "./queue.js";
+import { resolve } from "./resolve.js";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type JobRow = {
+	id: number;
+	company_id: number;
+	status: string;
+	window_start: string | null;
+	window_end: string | null;
+	resolved_name: string | null;
+	resolved_domains: string;
+	resolved_handles: string;
+	resolution_provenance: string | null;
+	error: string | null;
+	created_at: string;
+};
+
+type ResolvedIdentity = {
+	name: string;
+	domains: string[];
+	handles: string[];
+	windowStart: string;
+	windowEnd: string;
+};
 
 /**
  * Run the job pipeline end-to-end.
  *
- * This is a stub implementation that walks the state machine with hard-coded data:
- * - pending → resolving → searching → filtering → classifying → done|done_with_warnings|failed
- *
- * Each stage is separated by ~1.5s setTimeout, and the fake Search stage inserts ~8 results
- * (some sharing normalized URLs to show the unique constraint), Filter excludes one as an
- * aggregator, and finalize checks for warnings to decide done vs done_with_warnings.
+ * Stages:
+ * 1. Resolve: fetch homepage, extract handles, cascade heuristic/LLM/degraded if name-only.
+ *    Computes and stores the 36-month window. Transitions to 'searching'.
+ * 2. Search: build 18 queries from resolved identity, run all concurrently via Tavily,
+ *    insert deduplicated results. Transitions to 'filtering'.
+ * 3. Filter: stub — TODO: Task 13. Simple sleep + transition to 'classifying'.
+ * 4. Classify: stub — TODO: Task 15. Simple sleep + finalize.
  *
  * Wraps the entire run in try/catch → transition(..., 'failed', message).
- *
- * Note: This is throwaway scaffolding, completely replaced in Tasks 10, 13, 15.
  */
 export async function runPipeline(
 	db: DatabaseSync,
 	jobId: number,
 ): Promise<void> {
 	try {
-		// ─── Resolving stage ─────────────────────────────────────────────────────
-		transition(db, jobId, "resolving");
+		// ─── Stage 1: Resolve ───────────────────────────────────────────────────
+		// Computes window, fetches homepage, extracts handles.
+		// Calls transition(db, jobId, 'searching') at the end.
+		await resolve(db, jobId);
 
-		await sleep(1500);
+		// ─── Stage 2: Search ────────────────────────────────────────────────────
+		// Fetch resolved identity from DB, build queries, run all concurrently.
+		const job = db.prepare("SELECT * FROM jobs WHERE id = ?").get(jobId) as
+			| JobRow
+			| undefined;
 
-		// ─── Searching stage ─────────────────────────────────────────────────────
-		transition(db, jobId, "searching");
-
-		// Insert ~8 hard-coded results with varied domains and titles.
-		// Two of them share a normalized_url to show the UNIQUE constraint firing.
-		const fakeResults = [
-			{
-				normalized_url: "techcrunch.com/article/example-company-funding",
-				published_date: "2026-05-15",
-				snippet: "The startup announced a new funding round...",
-				source_domain: "techcrunch.com",
-				title: "Example Company Raises $10M Series A",
-				url: "https://www.techcrunch.com/article/example-company-funding",
-			},
-			{
-				normalized_url: "venturebeat.com/article/example-company-series-a",
-				published_date: "2026-05-16",
-				snippet: "The company announced a new funding round led by...",
-				source_domain: "venturebeat.com",
-				title: "Example Company Lands $10M Series A Investment",
-				url: "https://venturebeat.com/article/example-company-series-a",
-			},
-			{
-				normalized_url: "wired.com/article/example-company-news",
-				published_date: "2026-04-20",
-				snippet: "The team spent months developing this feature...",
-				source_domain: "wired.com",
-				title: "Inside Example Company's New Product Launch",
-				url: "https://wired.com/article/example-company-news",
-			},
-			{
-				normalized_url: "forbes.com/article/example-company-founders",
-				published_date: "2026-03-10",
-				snippet: "An exclusive interview with the founding team...",
-				source_domain: "forbes.com",
-				title: "How Example Company's Founders Built a Billion-Dollar Vision",
-				url: "https://forbes.com/article/example-company-founders",
-			},
-			{
-				normalized_url: "theregister.com/article/example-company-tech",
-				published_date: "2026-02-28",
-				snippet: "Independent benchmarks show the company's latest...",
-				source_domain: "theregister.com",
-				title: "Example Company's New AI Model Outperforms Competitors",
-				url: "https://theregister.com/article/example-company-tech",
-			},
-			{
-				normalized_url: "arstechnica.com/article/example-company-analysis",
-				published_date: "2026-01-15",
-				snippet: "Technical analysis of the company's infrastructure...",
-				source_domain: "arstechnica.com",
-				title: "A Deep Dive Into Example Company's Architecture",
-				url: "https://arstechnica.com/article/example-company-analysis",
-			},
-			{
-				normalized_url: "news.example-aggregator.com/story/123",
-				published_date: "2026-05-01",
-				snippet: "A summary of recent news about the company...",
-				source_domain: "news.example-aggregator.com",
-				title: "Example Company News Roundup",
-				url: "https://news.example-aggregator.com/story/123",
-			},
-			{
-				normalized_url: "techcrunch.com/article/example-company-funding",
-				published_date: "2026-05-15",
-				snippet: "The startup announced a new funding round...",
-				source_domain: "techcrunch.com",
-				title: "Example Company Raises $10M Series A (tracked link)",
-				// This one shares a normalized_url with techcrunch (above) to show unique constraint
-				url: "https://techcrunch.com/article/example-company-funding?utm_source=twitter",
-			},
-		];
-
-		// Insert each result with INSERT OR IGNORE to handle the unique constraint
-		const insertStmt = db.prepare(
-			`INSERT OR IGNORE INTO results
-			 (job_id, url, normalized_url, title, snippet, source_domain, published_date)
-			 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		);
-
-		for (const result of fakeResults) {
-			insertStmt.run(
-				jobId,
-				result.url,
-				result.normalized_url,
-				result.title,
-				result.snippet,
-				result.source_domain,
-				result.published_date,
-			);
+		if (!job) {
+			throw new Error(`job not found after resolve: ${jobId}`);
 		}
 
-		await sleep(1500);
+		// Construct resolved identity object
+		const companyName = db
+			.prepare(
+				"SELECT c.name FROM companies c JOIN jobs j ON j.company_id = c.id WHERE j.id = ?",
+			)
+			.get(jobId) as { name: string } | undefined;
 
-		// ─── Filtering stage ─────────────────────────────────────────────────────
+		const identity: ResolvedIdentity = {
+			domains: JSON.parse(job.resolved_domains) as string[],
+			handles: JSON.parse(job.resolved_handles) as string[],
+			name: job.resolved_name ?? companyName?.name ?? "Unknown Company",
+			windowEnd: job.window_end ?? "",
+			windowStart: job.window_start ?? "",
+		};
+
+		await runSearch(db, job, identity);
 		transition(db, jobId, "filtering");
 
-		// Mark the aggregator result as excluded
-		db.prepare(
-			`UPDATE results
-			 SET status = 'excluded', exclusion_code = 'aggregator'
-			 WHERE job_id = ? AND source_domain = 'news.example-aggregator.com'`,
-		).run(jobId);
-
-		await sleep(1500);
-
-		// ─── Classifying stage ──────────────────────────────────────────────────
+		// ─── Stage 3: Filter ────────────────────────────────────────────────────
+		// Stub for now. TODO: Task 13 will implement real filtering.
+		await sleep(500);
 		transition(db, jobId, "classifying");
 
-		// Fake classify: in a real implementation, this would call Claude Haiku.
-		// For now, we just mark results as included (no-op for this stub).
+		// ─── Stage 4: Classify ──────────────────────────────────────────────────
+		// Stub for now. TODO: Task 15 will implement real classification.
+		await sleep(500);
 
-		await sleep(1500);
-
-		// ─── Finalize ──────────────────────────────────────────────────────────
-		// Check if any warnings exist; if so, finish with 'done_with_warnings'.
+		// ─── Finalize ───────────────────────────────────────────────────────────
 		finalize(db, jobId);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
