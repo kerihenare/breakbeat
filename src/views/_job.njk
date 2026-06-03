@@ -50,16 +50,39 @@
         <span style="font-size:0.8rem; color:#555;">(polling every 2s…)</span>
       {% endif %}
 
-      {% if includedCount > 0 %}
-        <span style="font-size:0.875rem; color:#555;">{{ includedCount }} included</span>
-      {% endif %}
-      {% if excludedCount > 0 %}
-        <span style="font-size:0.875rem; color:#555;">· {{ excludedCount }} excluded</span>
-      {% endif %}
       {% if warningCount > 0 %}
         <span style="font-size:0.875rem; color:#856404;">· {{ warningCount }} warning{{ 's' if warningCount != 1 }}</span>
       {% endif %}
     </div>
+
+    {# ── Per-stage counters ───────────────────────────────────────────────── #}
+    {% if stats.returned > 0 or isTerminal %}
+      <div style="margin-top:0.4rem; font-size:0.85rem; color:#555;">
+        {{ stats.returned }} returned
+        {% if stats.excluded > 0 %} · {{ stats.excluded }} excluded{% endif %}
+        {% if stats.classified > 0 %} · {{ stats.classified }} classified{% endif %}
+      </div>
+    {% endif %}
+
+    {# ── Resolved-identity status line ───────────────────────────────────── #}
+    <div style="margin-top:0.4rem; font-size:0.85rem; color:#555;">
+      {% if job.resolution_provenance == 'url_provided' %}
+        Identified as: {{ job.resolved_name }} (from URL)
+      {% elif job.resolution_provenance == 'heuristic' %}
+        Identified as: {{ job.resolved_name }} (heuristic)
+      {% elif job.resolution_provenance == 'llm' %}
+        Identified as: {{ job.resolved_name }} (LLM-assisted)
+      {% else %}
+        (not identified)
+      {% endif %}
+    </div>
+
+    {# ── Window line ─────────────────────────────────────────────────────── #}
+    {% if job.window_start and job.window_end %}
+      <div style="margin-top:0.4rem; font-size:0.85rem; color:#555;">
+        window: {{ job.window_start }} → {{ job.window_end }}
+      </div>
+    {% endif %}
 
     {% if job.error %}
       <p style="margin:0.5rem 0 0; color:#9b1c1c;">{{ job.error }}</p>
@@ -88,6 +111,57 @@
     ['other',             'Other']
   ] %}
 
+  {# ── Type-chip filter row ────────────────────────────────────────────────── #}
+  {#
+    Build a list of content types that actually have included results.
+    Chips toggle section visibility using a small inline script.
+    Clicking a type chip shows only that section; clicking "All" restores all.
+  #}
+  {% if includedResults | length > 0 %}
+    {% set presentTypes = [] %}
+    {% for sectionDef in sections %}
+      {% if includedResults | where('content_type', sectionDef[0]) | length > 0 %}
+        {% set presentTypes = presentTypes.concat([[sectionDef[0], sectionDef[1]]]) %}
+      {% endif %}
+    {% endfor %}
+
+    {% if presentTypes | length > 1 %}
+      <div id="type-chips" style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:1rem;">
+        <button
+          type="button"
+          data-chip="all"
+          onclick="filterSections(null)"
+          style="padding:0.25rem 0.6rem; border:1px solid #0066cc; border-radius:999px; background:#0066cc; color:#fff; font-size:0.8rem; cursor:pointer;">
+          All
+        </button>
+        {% for typeDef in presentTypes %}
+          <button
+            type="button"
+            data-chip="{{ typeDef[0] }}"
+            onclick="filterSections('{{ typeDef[0] }}')"
+            style="padding:0.25rem 0.6rem; border:1px solid #ccc; border-radius:999px; background:#fff; color:#333; font-size:0.8rem; cursor:pointer;">
+            {{ typeDef[1] }}
+          </button>
+        {% endfor %}
+      </div>
+      <script>
+        function filterSections(type) {
+          var chips = document.querySelectorAll('#type-chips [data-chip]');
+          chips.forEach(function(c) {
+            var isActive = (type === null && c.dataset.chip === 'all') || c.dataset.chip === type;
+            c.style.background = isActive ? '#0066cc' : '#fff';
+            c.style.color = isActive ? '#fff' : '#333';
+            c.style.borderColor = isActive ? '#0066cc' : '#ccc';
+          });
+          var sections = document.querySelectorAll('[data-section]');
+          sections.forEach(function(s) {
+            s.style.display = (type === null || s.dataset.section === type) ? '' : 'none';
+          });
+        }
+      </script>
+    {% endif %}
+  {% endif %}
+
   {% if includedResults | length > 0 %}
 
     {% for sectionDef in sections %}
@@ -96,6 +170,7 @@
       {% set sectionRows = includedResults | where('content_type', sectionType) %}
 
       {% if sectionRows | length > 0 %}
+        <div data-section="{{ sectionType }}">
         <h2>{{ sectionLabel }} <span style="font-size:0.8rem; font-weight:normal; color:#555;">({{ sectionRows | length }})</span></h2>
 
         {#
@@ -115,6 +190,7 @@
           {% include "_result_row.njk" %}
         {% endfor %}
 
+        </div>
       {% endif %}
     {% endfor %}
 

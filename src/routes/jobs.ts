@@ -47,6 +47,16 @@ type JobRow = {
 	status: string;
 	created_at: string;
 	error: string | null;
+	window_start: string | null;
+	window_end: string | null;
+	resolved_name: string | null;
+	resolution_provenance: string | null;
+};
+
+type StatsRow = {
+	returned: number;
+	excluded: number;
+	classified: number;
 };
 
 type ResultRow = {
@@ -138,6 +148,13 @@ export function createJobsRouter(
 		res.redirect(303, `/${jobId}`);
 	});
 
+	// ─── GET /jobs-list ──────────────────────────────────────────────────────
+
+	router.get("/jobs-list", (_req: Request, res: Response) => {
+		const jobs = getJobsList(db);
+		res.render("_jobs_list.njk", { jobs });
+	});
+
 	// ─── GET /:id ────────────────────────────────────────────────────────────
 
 	router.get("/:id", (req: Request, res: Response) => {
@@ -183,6 +200,17 @@ export function createJobsRouter(
 				.get(id) as { n: number }
 		).n;
 
+		const stats = db
+			.prepare(
+				`SELECT
+  COUNT(*) as returned,
+  SUM(CASE WHEN status = 'excluded' THEN 1 ELSE 0 END) as excluded,
+  SUM(CASE WHEN status = 'included' AND content_type IS NOT NULL THEN 1 ELSE 0 END) as classified
+FROM results
+WHERE job_id = ?`,
+			)
+			.get(id) as StatsRow;
+
 		const results = db
 			.prepare(
 				`SELECT * FROM results WHERE job_id = ? ORDER BY published_date DESC, created_at DESC`,
@@ -194,6 +222,7 @@ export function createJobsRouter(
 			includedCount,
 			job,
 			results,
+			stats,
 			warningCount,
 		};
 
