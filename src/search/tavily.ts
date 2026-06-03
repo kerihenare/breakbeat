@@ -1,6 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { TavilySearchOptions } from "@tavily/core";
 import { tavily } from "@tavily/core";
+import { normalizeUrl } from "../filter/normalize.ts";
 import { addWarning } from "../jobs/queue.ts";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -223,62 +224,6 @@ function addMonths(dateStr: string, months: number): string {
 	return `${String(newYear).padStart(4, "0")}-${String(newMonth).padStart(2, "0")}-${String(clampedDay).padStart(2, "0")}`;
 }
 
-// ─── normalizeUrl ─────────────────────────────────────────────────────────────
-
-/**
- * Normalize a URL for dedup purposes (DB unique constraint key).
- *
- * Rules (per spec §3):
- * 1. Lowercase host, strip www.
- * 2. Drop scheme — http and https copies collapse
- * 3. Strip fragment
- * 4. Strip known tracking params (utm_*, fbclid, gclid, mc_cid, ref, source)
- * 5. Sort remaining query params
- * 6. Strip trailing slash on path; preserve path case
- */
-export function normalizeUrl(rawUrl: string): string {
-	let parsed: URL;
-	try {
-		parsed = new URL(rawUrl);
-	} catch {
-		// Unparseable — return lowercased as-is
-		return rawUrl.toLowerCase();
-	}
-
-	// 1. Lowercase host, strip www.
-	const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
-
-	// 2. Drop scheme (use host as prefix without scheme)
-	// 3. Strip fragment (URL constructor already omits it when we build the key)
-	// 4. Strip known tracking params
-	const TRACKING_PARAMS = new Set([
-		"fbclid",
-		"gclid",
-		"mc_cid",
-		"ref",
-		"source",
-	]);
-	const cleanParams = new URLSearchParams();
-	for (const [k, v] of parsed.searchParams.entries()) {
-		if (k.startsWith("utm_") || TRACKING_PARAMS.has(k)) {
-			continue;
-		}
-		cleanParams.append(k, v);
-	}
-
-	// 5. Sort remaining params
-	cleanParams.sort();
-
-	// 6. Strip trailing slash on path
-	const path = parsed.pathname.replace(/\/$/, "");
-
-	// Build the normalized key (no scheme, no fragment)
-	const paramStr = cleanParams.toString();
-	const key = paramStr ? `${host}${path}?${paramStr}` : `${host}${path}`;
-
-	return key;
-}
-
 // ─── runSearch ────────────────────────────────────────────────────────────────
 
 type JobRow = {
@@ -335,7 +280,13 @@ export async function runSearch(
 			const url = hit.url;
 			if (!url) continue;
 
-			const normalizedUrl = normalizeUrl(url);
+			let normalizedUrl: string;
+			try {
+				normalizedUrl = normalizeUrl(url);
+			} catch {
+				// Skip URLs that fail to parse
+				continue;
+			}
 
 			// Extract source domain
 			let sourceDomain: string;
