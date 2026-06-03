@@ -31,7 +31,7 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"includes": ["**", "!package.json"]
+		"includes": ["**", "!package.json", "!public/htmx.min.js"]
 	},
 	"formatter": {
 		"enabled": true,
