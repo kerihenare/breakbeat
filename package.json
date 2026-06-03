@@ -17,7 +17,7 @@
     "lint:fix": "biome check --write .",
     "test": "node --test \"src/**/*.test.ts\"",
     "test:watch": "node --test --watch \"src/**/*.test.ts\"",
-    "db:reset": "rm -f data/breakbeat.db"
+    "db:reset": "rm -f data/breakbeat.db*"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
