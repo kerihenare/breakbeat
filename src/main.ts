@@ -74,16 +74,33 @@ app.use(express.static(join(import.meta.dirname, "..", "public")));
 
 // ─── DB + queue ───────────────────────────────────────────────────────────────
 
-const db = getDb();
+let db: ReturnType<typeof getDb>;
+try {
+	db = getDb();
+} catch (e) {
+	console.error(
+		"Failed to initialize database:",
+		e instanceof Error ? e.message : e,
+	);
+	process.exit(1);
+}
+
 const { enqueue } = createQueue((jobId) => runPipeline(db, jobId));
 
 // ─── Boot re-enqueue ──────────────────────────────────────────────────────────
 
-const pendingJobs = db
-	.prepare("SELECT id FROM jobs WHERE status = 'pending' ORDER BY id")
-	.all() as Array<{ id: number }>;
-for (const job of pendingJobs) {
-	enqueue(job.id);
+try {
+	const pendingJobs = db
+		.prepare("SELECT id FROM jobs WHERE status = 'pending' ORDER BY id")
+		.all() as Array<{ id: number }>;
+	for (const job of pendingJobs) {
+		enqueue(job.id);
+	}
+} catch (e) {
+	console.error(
+		"Warning: failed to re-enqueue pending jobs at boot:",
+		e instanceof Error ? e.message : e,
+	);
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
