@@ -1,0 +1,15 @@
+{% extends "layout.njk" %}
+
+{% block title %}{{ job.company_name }} — Breakbeat{% endblock %}
+
+{% block content %}
+
+<p style="font-size:0.875rem; margin-bottom:1rem;">
+  <a href="/">&larr; All jobs</a>
+</p>
+
+<h2 style="margin-top:0">{{ job.company_name }}</h2>
+
+{% include "_job.njk" %}
+
+{% endblock %}

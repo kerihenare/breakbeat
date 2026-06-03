@@ -1,0 +1,225 @@
+{#
+  _job.njk — self-replacing HTMX fragment for job status + results.
+
+  Polling stop-condition is server-side: hx-trigger is only emitted when the job
+  is in a non-terminal state. Terminal states: done, failed, done_with_warnings.
+
+  Data received:
+    job            — row from jobs JOIN companies (id, status, error, company_name,
+                     created_at, window_start, window_end, resolved_name,
+                     resolved_domains, resolved_handles, resolution_provenance)
+    results        — array of ResultRow (see routes/jobs.ts)
+    includedCount  — integer
+    excludedCount  — integer
+    warningCount   — integer
+
+  Custom filters (registered in main.ts):
+    where(attr, value)    — keeps items where item[attr] === value (strict)
+    whereNot(attr, value) — keeps items where item[attr] !== value (strict)
+
+  Note: Nunjucks 3.x selectattr/rejectattr are 2-arg truthy filters only; the
+  Jinja2-style 3-arg form (attr, test, value) is not implemented — extra args
+  are silently ignored. The where/whereNot custom filters fill that gap.
+
+  NOTE: | safe is NOT used anywhere in this template. All output is auto-escaped.
+#}
+
+{% set terminalStates = ['done', 'failed', 'done_with_warnings'] %}
+{% set isTerminal = job.status in terminalStates %}
+
+{% if not isTerminal %}
+<div id="job-fragment"
+     hx-get="/{{ job.id }}"
+     hx-trigger="every 2s"
+     hx-swap="outerHTML">
+{% else %}
+<div id="job-fragment">
+{% endif %}
+
+  {# ── Status header ──────────────────────────────────────────────────────── #}
+  <div style="margin-bottom:1.5rem; padding:0.75rem 1rem; border:1px solid #ddd; border-radius:6px; background:#fff;">
+
+    <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+      <strong>Status:</strong>
+      {% if job.status == 'failed' %}
+        <span class="badge badge-fail">{{ job.status }}</span>
+      {% elif job.status == 'done' or job.status == 'done_with_warnings' %}
+        <span class="badge badge-status" style="background:#d1fae5; color:#065f46; border-color:#6ee7b7;">{{ job.status }}</span>
+      {% else %}
+        <span class="badge badge-status">{{ job.status }}</span>
+        <span style="font-size:0.8rem; color:#555;">(polling every 2s…)</span>
+      {% endif %}
+
+      {% if includedCount > 0 %}
+        <span style="font-size:0.875rem; color:#555;">{{ includedCount }} included</span>
+      {% endif %}
+      {% if excludedCount > 0 %}
+        <span style="font-size:0.875rem; color:#555;">· {{ excludedCount }} excluded</span>
+      {% endif %}
+      {% if warningCount > 0 %}
+        <span style="font-size:0.875rem; color:#856404;">· {{ warningCount }} warning{{ 's' if warningCount != 1 }}</span>
+      {% endif %}
+    </div>
+
+    {% if job.error %}
+      <p style="margin:0.5rem 0 0; color:#9b1c1c;">{{ job.error }}</p>
+    {% endif %}
+
+  </div>
+
+  {# ── Included results ────────────────────────────────────────────────────── #}
+  {# where('status', 'included') uses strict === so 'excluded' rows are not returned #}
+  {% set includedResults = results | where('status', 'included') %}
+  {% set excludedResults = results | where('status', 'excluded') %}
+
+  {#
+    Section definitions in fixed editorial order.
+    Each entry: [content_type value, display label]
+    Null content_type is handled separately below with a state-dependent label.
+  #}
+  {% set sections = [
+    ['news',              'News'],
+    ['trade_publication', 'Trade publications'],
+    ['press_release',     'Press releases'],
+    ['podcast',           'Podcasts'],
+    ['blog_post',         'Blog posts'],
+    ['newsletter',        'Newsletters'],
+    ['social_post',       'Social posts'],
+    ['other',             'Other']
+  ] %}
+
+  {% if includedResults | length > 0 %}
+
+    {% for sectionDef in sections %}
+      {% set sectionType = sectionDef[0] %}
+      {% set sectionLabel = sectionDef[1] %}
+      {% set sectionRows = includedResults | where('content_type', sectionType) %}
+
+      {% if sectionRows | length > 0 %}
+        <h2>{{ sectionLabel }} <span style="font-size:0.8rem; font-weight:normal; color:#555;">({{ sectionRows | length }})</span></h2>
+
+        {#
+          Date-known rows: whereNot('published_date', null) keeps rows with a date.
+          Date-unknown rows sink to the bottom of the section with a badge.
+          The DB query returns results ORDER BY published_date DESC — dated rows are
+          already in descending order; we separate them from null-date rows here.
+        #}
+        {% set datedRows   = sectionRows | whereNot('published_date', null) %}
+        {% set undatedRows = sectionRows | where('published_date', null) %}
+
+        {% for row in datedRows %}
+          {% include "_result_row.njk" %}
+        {% endfor %}
+
+        {% for row in undatedRows %}
+          {% include "_result_row.njk" %}
+        {% endfor %}
+
+      {% endif %}
+    {% endfor %}
+
+    {#
+      Null content_type section.
+      where('content_type', null) keeps rows the Classify stage has not yet processed
+      (mid-job) or failed to classify (terminal).
+      Label is state-dependent: "Awaiting classification" mid-job,
+      "Unclassified — classification failed, see warnings" at terminal.
+    #}
+    {% set nullTypeRows = includedResults | where('content_type', null) %}
+    {% if nullTypeRows | length > 0 %}
+      {% if isTerminal %}
+        <h2>Unclassified — classification failed, see warnings
+          <span style="font-size:0.8rem; font-weight:normal; color:#555;">({{ nullTypeRows | length }})</span>
+        </h2>
+      {% else %}
+        <h2>Awaiting classification
+          <span style="font-size:0.8rem; font-weight:normal; color:#555;">({{ nullTypeRows | length }})</span>
+        </h2>
+      {% endif %}
+
+      {% set datedNullRows   = nullTypeRows | whereNot('published_date', null) %}
+      {% set undatedNullRows = nullTypeRows | where('published_date', null) %}
+
+      {% for row in datedNullRows %}
+        {% include "_result_row.njk" %}
+      {% endfor %}
+
+      {% for row in undatedNullRows %}
+        {% include "_result_row.njk" %}
+      {% endfor %}
+
+    {% endif %}
+
+  {% elif isTerminal %}
+    <p style="color:#555;">No results were included for this job.</p>
+  {% else %}
+    <p style="color:#555;">Results will appear here as the pipeline runs…</p>
+  {% endif %}
+
+  {# ── Excluded section (collapsed) ──────────────────────────────────────── #}
+  {% if excludedResults | length > 0 %}
+    <details style="margin-top:2rem;">
+      <summary style="cursor:pointer; font-weight:600; color:#555;">
+        Excluded ({{ excludedResults | length }})
+      </summary>
+
+      <div style="margin-top:1rem;">
+
+        {# Group by exclusion_code in a fixed order over the closed set of codes #}
+        {% set exclusionCodes = [
+          ['own_channel',      'Own channel'],
+          ['aggregator',       'Aggregator'],
+          ['ecommerce_review', 'Ecommerce / review'],
+          ['out_of_window',    'Out of window'],
+          ['duplicate',        'Duplicate']
+        ] %}
+
+        {% for codeDef in exclusionCodes %}
+          {% set code = codeDef[0] %}
+          {% set codeLabel = codeDef[1] %}
+          {% set codeRows = excludedResults | where('exclusion_code', code) %}
+
+          {% if codeRows | length > 0 %}
+            <h3 style="font-size:0.9rem; margin:1rem 0 0.5rem; color:#555;">
+              {{ codeLabel }} ({{ codeRows | length }})
+            </h3>
+            <ul style="list-style:none; padding:0; margin:0; font-size:0.85rem;">
+              {% for row in codeRows %}
+                <li style="padding:0.3rem 0; border-bottom:1px solid #f0f0f0; display:flex; gap:0.75rem; flex-wrap:wrap;">
+                  <a href="{{ row.url }}" target="_blank" rel="noopener noreferrer" style="flex:1; min-width:0;">{{ row.title }}</a>
+                  {% if row.exclusion_detail %}
+                    <span style="color:#777; white-space:nowrap;">{{ row.exclusion_detail }}</span>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endfor %}
+
+        {#
+          Defensive fallback: excluded rows with a null exclusion_code (should not
+          occur in production since exclusion_code is always set on exclusion, but
+          guards against partially-processed states during development).
+        #}
+        {% set uncategorisedExcluded = excludedResults | where('exclusion_code', null) %}
+        {% if uncategorisedExcluded | length > 0 %}
+          <h3 style="font-size:0.9rem; margin:1rem 0 0.5rem; color:#555;">
+            Unspecified ({{ uncategorisedExcluded | length }})
+          </h3>
+          <ul style="list-style:none; padding:0; margin:0; font-size:0.85rem;">
+            {% for row in uncategorisedExcluded %}
+              <li style="padding:0.3rem 0; border-bottom:1px solid #f0f0f0;">
+                <a href="{{ row.url }}" target="_blank" rel="noopener noreferrer">{{ row.title }}</a>
+                {% if row.exclusion_detail %}
+                  — <span style="color:#777;">{{ row.exclusion_detail }}</span>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+      </div>
+    </details>
+  {% endif %}
+
+</div>
