@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { ResolvedIdentity } from "../search/tavily.ts";
 import { AGGREGATOR_BLOCKLIST } from "../search/tavily.ts";
-import { matchesHandlePrefix } from "./normalize.ts";
+import { matchesHandlePrefix, normalizeTitle } from "./normalize.ts";
 
 // ─── Exported constants ───────────────────────────────────────────────────────
 
@@ -251,6 +251,148 @@ export function applyHeuristics(
 		const exclusion = heuristicExclusion(row, identity, windowStart);
 		if (exclusion !== null) {
 			update.run(exclusion.code, exclusion.detail, row.id);
+		}
+	}
+}
+
+// ─── collapse ─────────────────────────────────────────────────────────────────
+
+type CollapseRow = {
+	id: number;
+	title: string;
+	published_date: string | null;
+	normalized_url: string;
+};
+
+const COLLAPSE_MIN_TITLE_LEN = 25;
+const COLLAPSE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000; // 14 days in milliseconds
+
+/**
+ * Deduplicate near-identical results within the same job by normalized title.
+ *
+ * Only operates on still-`included` results. Losers are marked:
+ *   status='excluded', exclusion_code='duplicate', exclusion_detail='of #<winner.id>'
+ *
+ * Algorithm:
+ *   1. Normalize each title; skip if < 25 chars.
+ *   2. Group by normalized title; groups with 1 member are ignored.
+ *   3. Split each group into DATED (published_date != null) and UNDATED subsets.
+ *   4. Cluster DATED results using anchor-on-earliest (14-day window, no chaining).
+ *   5. Winner per cluster = anchor (earliest date); losers → excluded/duplicate.
+ *   6. UNDATED results:
+ *      - 0 or 1 dated clusters: join the cluster (winner = dated anchor if any, else lowest id).
+ *      - 2+ dated clusters: stay included (ambiguous which story they belong to).
+ */
+export function collapse(db: DatabaseSync, jobId: number): void {
+	const rows = db
+		.prepare(
+			`SELECT id, title, published_date, normalized_url
+			 FROM results
+			 WHERE job_id = ? AND status = 'included'`,
+		)
+		.all(jobId) as CollapseRow[];
+
+	const update = db.prepare(
+		`UPDATE results
+		 SET status = 'excluded', exclusion_code = 'duplicate', exclusion_detail = ?
+		 WHERE id = ?`,
+	);
+
+	// Step 1 & 2: normalize titles and group
+	const groups = new Map<string, CollapseRow[]>();
+
+	for (const row of rows) {
+		const norm = normalizeTitle(row.title);
+		if (norm.length < COLLAPSE_MIN_TITLE_LEN) {
+			continue; // skip short titles
+		}
+		const existing = groups.get(norm);
+		if (existing === undefined) {
+			groups.set(norm, [row]);
+		} else {
+			existing.push(row);
+		}
+	}
+
+	for (const group of groups.values()) {
+		if (group.length < 2) {
+			continue; // singleton — nothing to collapse
+		}
+
+		// Step 3: split into dated and undated
+		const dated = group.filter((r) => r.published_date !== null);
+		const undated = group.filter((r) => r.published_date === null);
+
+		// Step 4: cluster dated results using anchor-on-earliest (sort ASC first)
+		dated.sort((a, b) => {
+			// Both are non-null here (typed above, but TS needs the guard)
+			const ta = new Date(a.published_date as string).getTime();
+			const tb = new Date(b.published_date as string).getTime();
+			return ta - tb;
+		});
+
+		// clusters: each element is [anchor, ...rest]
+		const clusters: CollapseRow[][] = [];
+
+		for (const result of dated) {
+			const t = new Date(result.published_date as string).getTime();
+			// Find the first cluster whose anchor is within 14 days of this result
+			let placed = false;
+			for (const cluster of clusters) {
+				const anchorTime = new Date(
+					cluster[0].published_date as string,
+				).getTime();
+				if (t - anchorTime <= COLLAPSE_WINDOW_MS) {
+					cluster.push(result);
+					placed = true;
+					break;
+				}
+			}
+			if (!placed) {
+				clusters.push([result]);
+			}
+		}
+
+		// Step 5: winner per cluster = anchor (index 0); losers → excluded
+		for (const cluster of clusters) {
+			if (cluster.length < 2) {
+				continue; // singleton cluster — no losers
+			}
+			const winner = cluster[0];
+			for (let i = 1; i < cluster.length; i++) {
+				update.run(`of #${winner.id}`, cluster[i].id);
+			}
+		}
+
+		// Step 6: handle undated results
+		if (undated.length === 0) {
+			continue;
+		}
+
+		const dateClusters = clusters.length;
+
+		if (dateClusters >= 2) {
+			// Ambiguous — undated results stay included
+			continue;
+		}
+
+		// 0 or 1 dated clusters: undated results join
+		// Winner: the dated anchor if 1 cluster exists, else lowest id among undated
+		let undatedWinner: CollapseRow;
+
+		if (dateClusters === 1) {
+			// The dated anchor (cluster[0][0]) is the winner for the whole group
+			const dateWinner = clusters[0][0];
+			for (const u of undated) {
+				update.run(`of #${dateWinner.id}`, u.id);
+			}
+		} else {
+			// 0 dated clusters — all-undated group: winner = lowest id
+			undated.sort((a, b) => a.id - b.id);
+			undatedWinner = undated[0];
+			for (let i = 1; i < undated.length; i++) {
+				update.run(`of #${undatedWinner.id}`, undated[i].id);
+			}
 		}
 	}
 }
