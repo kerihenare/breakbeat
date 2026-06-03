@@ -1,0 +1,28 @@
+{
+  "name": "@kerihenare/breakbeat",
+  "description": "Breakbeat is a tool for finding content about a company",
+  "author": "Keri Henare <keri@henare.co.nz>",
+  "private": true,
+  "license": "MIT",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./src/index.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kerihenare/breakbeat.git"
+  },
+  "scripts": {
+    "dev": "node .",
+    "lint": "biome lint --write .",
+    "lint:fix": "biome check --write .",
+    "test": "node --test",
+    "test:watch": "node --test --watch"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
+    "@types/node": "^25.9.1",
+    "typescript": "^6.0.3"
+  },
+  "packageManager": "pnpm@11.5.1+sha512.93f7b57422ea7068257235b4c16eb60762eb68e1dc23723199cc739043ea9be2c4143274a399d8c6defa2b1176226d9ca1c4b63482d6200c1a8fbaa78c1d1485"
+}
