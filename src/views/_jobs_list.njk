@@ -1,0 +1,64 @@
+{#
+  _jobs_list.njk — HTMX fragment for the jobs list on the homepage.
+
+  Polling is only active while at least one visible job is non-terminal.
+  Terminal states: done, failed, done_with_warnings.
+
+  Data received:
+    jobs       — array of JobListRow (id, company_name, status, included_count, created_at)
+    hasActive  — boolean: true if any job is in a non-terminal state
+#}
+
+{% set terminalStates = ['done', 'failed', 'done_with_warnings'] %}
+{% set hasActive = false %}
+{% for job in jobs %}
+  {% if job.status not in terminalStates %}
+    {% set hasActive = true %}
+  {% endif %}
+{% endfor %}
+
+{% if hasActive %}
+<div id="jobs-list-fragment"
+     hx-get="/jobs-list"
+     hx-trigger="every 2s"
+     hx-swap="outerHTML">
+{% else %}
+<div id="jobs-list-fragment">
+{% endif %}
+
+  {% if jobs | length == 0 %}
+    <p style="color:#555;">No jobs yet. Start a search above.</p>
+  {% else %}
+    <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+      <thead>
+        <tr style="text-align:left; border-bottom:2px solid #ddd;">
+          <th style="padding:0.5rem 0.5rem 0.5rem 0;">Company</th>
+          <th style="padding:0.5rem;">Status</th>
+          <th style="padding:0.5rem;">Results</th>
+          <th style="padding:0.5rem;">Started</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for job in jobs %}
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:0.5rem 0.5rem 0.5rem 0;">
+              <a href="/{{ job.id }}">{{ job.company_name }}</a>
+            </td>
+            <td style="padding:0.5rem;">
+              {% if job.status == 'failed' %}
+                <span class="badge badge-fail">{{ job.status }}</span>
+              {% elif job.status == 'done' or job.status == 'done_with_warnings' %}
+                <span class="badge badge-status" style="background:#d1fae5; color:#065f46; border-color:#6ee7b7;">{{ job.status }}</span>
+              {% else %}
+                <span class="badge badge-status">{{ job.status }}</span>
+              {% endif %}
+            </td>
+            <td style="padding:0.5rem;">{{ job.included_count }}</td>
+            <td style="padding:0.5rem; color:#555;">{{ job.created_at }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+</div>

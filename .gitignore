@@ -144,3 +144,4 @@ vite.config.ts.timestamp-*
 
 # SQLite database
 data/
+test-output.txt

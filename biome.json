@@ -7,8 +7,17 @@
 					"level": "on",
 					"options": {
 						"groups": [
-							[":NODE:", ":PACKAGE:", ":PACKAGE_WITH_PROTOCOL:", ":URL:"],
-							["~/**", ":ALIAS:", ":PATH:"]
+							[
+								":NODE:",
+								":PACKAGE:",
+								":PACKAGE_WITH_PROTOCOL:",
+								":URL:"
+							],
+							[
+								"~/**",
+								":ALIAS:",
+								":PATH:"
+							]
 						],
 						"identifierOrder": "natural"
 					}
@@ -31,7 +40,11 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"includes": ["**", "!package.json"]
+		"includes": [
+			"**",
+			"!package.json",
+			"!public/htmx.min.js"
+		]
 	},
 	"formatter": {
 		"enabled": true,
@@ -50,7 +63,9 @@
 	},
 	"overrides": [
 		{
-			"includes": ["**/*.astro"],
+			"includes": [
+				"**/*.astro"
+			],
 			"linter": {
 				"rules": {
 					"correctness": {

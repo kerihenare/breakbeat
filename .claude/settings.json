@@ -1,5 +1,11 @@
 {
+<<<<<<< HEAD
   "enabledPlugins": {
     "amazon-location-service@claude-plugins-official": true
   }
+=======
+	"enabledPlugins": {
+		"amazon-location-service@claude-plugins-official": true
+	}
+>>>>>>> master
 }

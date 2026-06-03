@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Breakbeat{% endblock %}</title>
+    <script src="/htmx.min.js"></script>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 1.5rem;
+        max-width: 900px;
+        margin-inline: auto;
+        color: #1a1a1a;
+        background: #fafafa;
+      }
+      a { color: #0066cc; }
+      a:visited { color: #5500cc; }
+      h1 { font-size: 1.5rem; margin-top: 0; }
+      h2 { font-size: 1.1rem; margin-top: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+      header { margin-bottom: 2rem; }
+      header a { text-decoration: none; color: inherit; }
+      nav { font-size: 0.875rem; color: #555; }
+      .badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        padding: 0.1rem 0.45rem;
+        border-radius: 999px;
+        font-weight: 600;
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+      .badge-low    { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+      .badge-date   { background: #e8e8e8; color: #555; border: 1px solid #ccc; }
+      .badge-status { background: #e0ecff; color: #0047ab; border: 1px solid #99c2ff; }
+      .badge-fail   { background: #fde8e8; color: #9b1c1c; border: 1px solid #f5a0a0; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1><a href="/">Breakbeat</a></h1>
+      <nav>Third-party content tracker</nav>
+    </header>
+    {% block content %}{% endblock %}
+  </body>
+</html>
