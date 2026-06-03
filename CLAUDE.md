@@ -31,6 +31,36 @@ Build a basic web app that:
 - Evaluated on: product judgement, technical architecture, agent-assisted execution, handling ambiguity, search/retrieval strategy, background job design, result quality and deduplication, clear local setup, sensible trade-offs, security and cost awareness.
 - Deliverables alongside code: a write-up (approach, trade-offs, next steps) and an agent transcript — both can live in this repo.
 
+## Stack
+
+Node.js v26 (`.nvmrc`) running TypeScript natively via type stripping — **erasable syntax only**: no `enum`, `namespace`, or constructor parameter properties. Express + Nunjucks (autoescape on) + HTMX polling; SQLite via built-in `node:sqlite`; Tavily for search; Claude Haiku for classification; Biome for lint/format; pnpm as package manager.
+
+## Key Documents
+
+- `CONTEXT.md` — domain language; use its terms exactly (Job, Result, Exclusion, Collapse, Own Channel, Warning)
+- `docs/0-brief.md` — original exercise brief
+- `docs/1-spec.md` — design spec (source of truth for architecture, pipeline stages, trade-offs)
+
+## Environment
+
+Copy `.env.example` → `.env` and set `ANTHROPIC_API_KEY` and `TAVILY_API_KEY`. Keys load via `node --env-file-if-exists=.env` (no dotenv).
+
 ## Development Commands
 
-None yet — once a stack is chosen, document build/run/test commands here.
+```bash
+pnpm install
+pnpm dev          # run with --watch, loads .env
+pnpm test         # native node --test runner (src/**/*.test.ts)
+pnpm test:watch
+pnpm lint:fix     # biome check --write
+pnpm db:reset     # delete data/breakbeat.db
+```
+
+## Do not build
+- authentication
+- production deployment
+- CI/CD
+- complex crawling
+- social media login/API integrations
+- advanced NLP classification
+- perfect coverage across all content types

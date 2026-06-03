@@ -6,17 +6,18 @@
   "license": "MIT",
   "version": "0.0.1",
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./src/main.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/kerihenare/breakbeat.git"
   },
   "scripts": {
-    "dev": "node .",
+    "dev": "node --env-file-if-exists=.env --watch src/main.ts",
     "lint": "biome lint --write .",
     "lint:fix": "biome check --write .",
-    "test": "node --test",
-    "test:watch": "node --test --watch"
+    "test": "node --test \"src/**/*.test.ts\"",
+    "test:watch": "node --test --watch \"src/**/*.test.ts\"",
+    "db:reset": "rm -f data/breakbeat.db"
   },
   "dependencies": {},
   "devDependencies": {
