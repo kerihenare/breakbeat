@@ -77,6 +77,15 @@ app.use(express.static(join(import.meta.dirname, "..", "public")));
 const db = getDb();
 const { enqueue } = createQueue((jobId) => runPipeline(db, jobId));
 
+// ─── Boot re-enqueue ──────────────────────────────────────────────────────────
+
+const pendingJobs = db
+	.prepare("SELECT id FROM jobs WHERE status = 'pending' ORDER BY id")
+	.all() as Array<{ id: number }>;
+for (const job of pendingJobs) {
+	enqueue(job.id);
+}
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 app.use("/", createJobsRouter(db, enqueue));
