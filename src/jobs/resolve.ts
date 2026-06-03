@@ -311,6 +311,8 @@ export async function resolve(db: DatabaseSync, jobId: number): Promise<void> {
 		throw new Error(`job not found: ${jobId}`);
 	}
 
+	transition(db, jobId, "resolving");
+
 	const company = db
 		.prepare("SELECT id, name, url, url_host FROM companies WHERE id = ?")
 		.get(job.company_id) as CompanyRow | undefined;
