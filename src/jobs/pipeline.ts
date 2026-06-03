@@ -1,4 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
+import { applyHeuristics, collapse } from "../filter/heuristics.ts";
 import { runSearch } from "../search/tavily.ts";
 import { transition } from "./queue.ts";
 import { resolve } from "./resolve.ts";
@@ -35,7 +36,7 @@ type ResolvedIdentity = {
  *    Computes and stores the 36-month window. Transitions to 'searching'.
  * 2. Search: build 18 queries from resolved identity, run all concurrently via Tavily,
  *    insert deduplicated results. Transitions to 'filtering'.
- * 3. Filter: stub — TODO: Task 13. Simple sleep + transition to 'classifying'.
+ * 3. Filter: apply heuristics and collapse to deduplicate results.
  * 4. Classify: stub — TODO: Task 15. Simple sleep + finalize.
  *
  * Wraps the entire run in try/catch → transition(..., 'failed', message).
@@ -79,8 +80,9 @@ export async function runPipeline(
 		transition(db, jobId, "filtering");
 
 		// ─── Stage 3: Filter ────────────────────────────────────────────────────
-		// Stub for now. TODO: Task 13 will implement real filtering.
-		await sleep(500);
+		// Apply heuristic exclusion rules and deduplicate by normalized title.
+		applyHeuristics(db, jobId, identity);
+		collapse(db, jobId);
 		transition(db, jobId, "classifying");
 
 		// ─── Stage 4: Classify ──────────────────────────────────────────────────
