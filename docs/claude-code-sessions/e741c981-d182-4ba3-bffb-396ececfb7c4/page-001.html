@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code transcript - page 1</title>
+    <style>
+:root { --bg-color: #f5f5f5; --card-bg: #ffffff; --user-bg: #e3f2fd; --user-border: #1976d2; --assistant-bg: #f5f5f5; --assistant-border: #9e9e9e; --thinking-bg: #fff8e1; --thinking-border: #ffc107; --thinking-text: #666; --tool-bg: #f3e5f5; --tool-border: #9c27b0; --tool-result-bg: #e8f5e9; --tool-error-bg: #ffebee; --text-color: #212121; --text-muted: #757575; --code-bg: #263238; --code-text: #aed581; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 16px; line-height: 1.6; }
+.container { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 2px solid var(--user-border); }
+.header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid var(--user-border); padding-bottom: 8px; margin-bottom: 24px; }
+.header-row h1 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; flex: 1; min-width: 200px; }
+.message { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.message.user { background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.message.assistant { background: var(--card-bg); border-left: 4px solid var(--assistant-border); }
+.message.tool-reply { background: #fff8e1; border-left: 4px solid #ff9800; }
+.tool-reply .role-label { color: #e65100; }
+.tool-reply .tool-result { background: transparent; padding: 0; margin: 0; }
+.tool-reply .tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.message-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.role-label { font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.user .role-label { color: var(--user-border); }
+time { color: var(--text-muted); font-size: 0.8rem; }
+.timestamp-link { color: inherit; text-decoration: none; }
+.timestamp-link:hover { text-decoration: underline; }
+.message:target { animation: highlight 2s ease-out; }
+@keyframes highlight { 0% { background-color: rgba(25, 118, 210, 0.2); } 100% { background-color: transparent; } }
+.message-content { padding: 16px; }
+.message-content p { margin: 0 0 12px 0; }
+.message-content p:last-child { margin-bottom: 0; }
+.thinking { background: var(--thinking-bg); border: 1px solid var(--thinking-border); border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 0.9rem; color: var(--thinking-text); }
+.thinking-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #f57c00; margin-bottom: 8px; }
+.thinking p { margin: 8px 0; }
+.assistant-text { margin: 8px 0; }
+.tool-use { background: var(--tool-bg); border: 1px solid var(--tool-border); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-header { font-weight: 600; color: var(--tool-border); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.tool-icon { font-size: 1.1rem; }
+.tool-description { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; font-style: italic; }
+.tool-result { background: var(--tool-result-bg); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-result.tool-error { background: var(--tool-error-bg); }
+.file-tool { border-radius: 8px; padding: 12px; margin: 12px 0; }
+.write-tool { background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%); border: 1px solid #4caf50; }
+.edit-tool { background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%); border: 1px solid #ff9800; }
+.file-tool-header { font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.write-header { color: #2e7d32; }
+.edit-header { color: #e65100; }
+.file-tool-icon { font-size: 1rem; }
+.file-tool-path { font-family: monospace; background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 4px; }
+.file-tool-fullpath { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; word-break: break-all; }
+.file-content { margin: 0; }
+.edit-section { display: flex; margin: 4px 0; border-radius: 4px; overflow: hidden; }
+.edit-label { padding: 8px 12px; font-weight: bold; font-family: monospace; display: flex; align-items: flex-start; }
+.edit-old { background: #fce4ec; }
+.edit-old .edit-label { color: #b71c1c; background: #f8bbd9; }
+.edit-old .edit-content { color: #880e4f; }
+.edit-new { background: #e8f5e9; }
+.edit-new .edit-label { color: #1b5e20; background: #a5d6a7; }
+.edit-new .edit-content { color: #1b5e20; }
+.edit-content { margin: 0; flex: 1; background: transparent; font-size: 0.85rem; }
+.edit-replace-all { font-size: 0.75rem; font-weight: normal; color: var(--text-muted); }
+.write-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #e6f4ea); }
+.edit-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff0e5); }
+.todo-list { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1px solid #81c784; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.todo-header { font-weight: 600; color: #2e7d32; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.todo-items { list-style: none; margin: 0; padding: 0; }
+.todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 0.9rem; }
+.todo-item:last-child { border-bottom: none; }
+.todo-icon { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; }
+.todo-completed .todo-icon { color: #2e7d32; background: rgba(46, 125, 50, 0.15); }
+.todo-completed .todo-content { color: #558b2f; text-decoration: line-through; }
+.todo-in-progress .todo-icon { color: #f57c00; background: rgba(245, 124, 0, 0.15); }
+.todo-in-progress .todo-content { color: #e65100; font-weight: 500; }
+.todo-pending .todo-icon { color: #757575; background: rgba(0,0,0,0.05); }
+.todo-pending .todo-content { color: #616161; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; margin: 8px 0; white-space: pre-wrap; word-wrap: break-word; }
+pre.json { color: #e0e0e0; }
+code { background: rgba(0,0,0,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre code { background: none; padding: 0; }
+.user-content { margin: 0; }
+.truncatable { position: relative; }
+.truncatable.truncated .truncatable-content { max-height: 200px; overflow: hidden; }
+.truncatable.truncated::after { content: ''; position: absolute; bottom: 32px; left: 0; right: 0; height: 60px; background: linear-gradient(to bottom, transparent, var(--card-bg)); pointer-events: none; }
+.message.user .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--user-bg)); }
+.message.tool-reply .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.tool-use .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-bg)); }
+.tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-result-bg)); }
+.expand-btn { display: none; width: 100%; padding: 8px 16px; margin-top: 4px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); }
+.expand-btn:hover { background: rgba(0,0,0,0.1); }
+.truncatable.truncated .expand-btn, .truncatable.expanded .expand-btn { display: block; }
+.pagination { display: flex; justify-content: center; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+.pagination a, .pagination span { padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; }
+.pagination a { background: var(--card-bg); color: var(--user-border); border: 1px solid var(--user-border); }
+.pagination a:hover { background: var(--user-bg); }
+.pagination .current { background: var(--user-border); color: white; }
+.pagination .disabled { color: var(--text-muted); border: 1px solid #ddd; }
+.pagination .index-link { background: var(--user-border); color: white; }
+details.continuation { margin-bottom: 16px; }
+details.continuation summary { cursor: pointer; padding: 12px 16px; background: var(--user-bg); border-left: 4px solid var(--user-border); border-radius: 12px; font-weight: 500; color: var(--text-muted); }
+details.continuation summary:hover { background: rgba(25, 118, 210, 0.15); }
+details.continuation[open] summary { border-radius: 12px 12px 0 0; margin-bottom: 0; }
+.index-item { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.index-item a { display: block; text-decoration: none; color: inherit; }
+.index-item a:hover { background: rgba(25, 118, 210, 0.1); }
+.index-item-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.index-item-number { font-weight: 600; color: var(--user-border); }
+.index-item-content { padding: 16px; }
+.index-item-stats { padding: 8px 16px 12px 32px; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(0,0,0,0.06); }
+.index-item-commit { margin-top: 6px; padding: 4px 8px; background: #fff3e0; border-radius: 4px; font-size: 0.85rem; color: #e65100; }
+.index-item-commit code { background: rgba(0,0,0,0.08); padding: 1px 4px; border-radius: 3px; font-size: 0.8rem; margin-right: 6px; }
+.commit-card { margin: 8px 0; padding: 10px 14px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 6px; }
+.commit-card a { text-decoration: none; color: #5d4037; display: block; }
+.commit-card a:hover { color: #e65100; }
+.commit-card-hash { font-family: monospace; color: #e65100; font-weight: 600; margin-right: 8px; }
+.index-commit { margin-bottom: 12px; padding: 10px 16px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.index-commit a { display: block; text-decoration: none; color: inherit; }
+.index-commit a:hover { background: rgba(255, 152, 0, 0.1); margin: -10px -16px; padding: 10px 16px; border-radius: 8px; }
+.index-commit-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 4px; }
+.index-commit-hash { font-family: monospace; color: #e65100; font-weight: 600; }
+.index-commit-msg { color: #5d4037; }
+.index-item-long-text { margin-top: 8px; padding: 12px; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--assistant-border); }
+.index-item-long-text .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--card-bg)); }
+.index-item-long-text-content { color: var(--text-color); }
+#search-box { display: none; align-items: center; gap: 8px; }
+#search-box input { padding: 6px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; width: 180px; }
+#search-box button, #modal-search-btn, #modal-close-btn { background: var(--user-border); color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#search-box button:hover, #modal-search-btn:hover { background: #1565c0; }
+#modal-close-btn { background: var(--text-muted); margin-left: 8px; }
+#modal-close-btn:hover { background: #616161; }
+#search-modal[open] { border: none; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); padding: 0; width: 90vw; max-width: 900px; height: 80vh; max-height: 80vh; display: flex; flex-direction: column; }
+#search-modal::backdrop { background: rgba(0,0,0,0.5); }
+.search-modal-header { display: flex; align-items: center; gap: 8px; padding: 16px; border-bottom: 1px solid var(--assistant-border); background: var(--bg-color); border-radius: 12px 12px 0 0; }
+.search-modal-header input { flex: 1; padding: 8px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; }
+#search-status { padding: 8px 16px; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+#search-results { flex: 1; overflow-y: auto; padding: 16px; }
+.search-result { margin-bottom: 16px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.search-result a { display: block; text-decoration: none; color: inherit; }
+.search-result a:hover { background: rgba(25, 118, 210, 0.05); }
+.search-result-page { padding: 6px 12px; background: rgba(0,0,0,0.03); font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+.search-result-content { padding: 12px; }
+.search-result mark { background: #fff59d; padding: 1px 2px; border-radius: 2px; }
+@media (max-width: 600px) { body { padding: 8px; } .message, .index-item { border-radius: 8px; } .message-content, .index-item-content { padding: 12px; } pre { font-size: 0.8rem; padding: 8px; } #search-box input { width: 120px; } #search-modal[open] { width: 95vw; height: 90vh; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1><a href="index.html" style="color: inherit; text-decoration: none;">Claude Code transcript</a> - page 1/2</h1>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<span class="disabled">&larr; Prev</span>
+<span class="current">1</span>
+<a href="page-002.html">2</a>
+<a href="page-002.html">Next &rarr;</a>
+</div>
+
+        
+<div class="message user" id="msg-2026-06-03T10-04-36-712Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-06-03T10-04-36-712Z" class="timestamp-link"><time datetime="2026-06-03T10:04:36.712Z" data-timestamp="2026-06-03T10:04:36.712Z">2026-06-03T10:04:36.712Z</time></a></div><div class="message-content">
+<div class="user-content"><p><local-command-caveat>Caveat: The messages below were generated by the user while running local commands. DO NOT respond to these messages or otherwise consider them in your response unless the user explicitly asks you to.</local-command-caveat></p></div></div></div>
+<div class="message user" id="msg-2026-06-03T10-04-36-306Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-06-03T10-04-36-306Z" class="timestamp-link"><time datetime="2026-06-03T10:04:36.306Z" data-timestamp="2026-06-03T10:04:36.306Z">2026-06-03T10:04:36.306Z</time></a></div><div class="message-content">
+<div class="user-content"><p><command-name>/clear</command-name>
+            <command-message>clear</command-message>
+            <command-args></command-args></p></div></div></div>
+<div class="message user" id="msg-2026-06-03T10-13-23-910Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-06-03T10-13-23-910Z" class="timestamp-link"><time datetime="2026-06-03T10:13:23.910Z" data-timestamp="2026-06-03T10:13:23.910Z">2026-06-03T10:13:23.910Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Write a concrete implementation plan (using superpowers), based on @docs/1-spec.md.</p>
+<p>Save the file as <code>docs/2-plan.md</code></p>
+<p>Assume the app must run locally after cloning the repo and adding environment variables.</p>
+<p>Include:
+- stack choice
+- app structure
+- data model
+- background job approach
+- search/retrieval strategy
+- result filtering rules
+- deduplication strategy
+- status lifecycle
+- error handling
+- setup instructions
+- risks and trade-offs</p></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-13-27-618Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-13-27-618Z" class="timestamp-link"><time datetime="2026-06-03T10:13:27.618Z" data-timestamp="2026-06-03T10:13:27.618Z">2026-06-03T10:13:27.618Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-13-28-564Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-13-28-564Z" class="timestamp-link"><time datetime="2026-06-03T10:13:28.564Z" data-timestamp="2026-06-03T10:13:28.564Z">2026-06-03T10:13:28.564Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>I'll use the superpowers:writing-plans skill since we have a spec and need an implementation plan.</p></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-13-28-818Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-13-28-818Z" class="timestamp-link"><time datetime="2026-06-03T10:13:28.818Z" data-timestamp="2026-06-03T10:13:28.818Z">2026-06-03T10:13:28.818Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01HvuN9BebjaMbaKKDj4k4TJ"><div class="tool-header"><span class="tool-icon">⚙</span> Skill</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;skill&#34;: &#34;superpowers:writing-plans&#34;,
+  &#34;args&#34;: &#34;Write docs/2-plan.md based on docs/1-spec.md&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-06-03T10-13-28-961Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-06-03T10-13-28-961Z" class="timestamp-link"><time datetime="2026-06-03T10:13:28.961Z" data-timestamp="2026-06-03T10:13:28.961Z">2026-06-03T10:13:28.961Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Launching skill: superpowers:writing-plans</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message user" id="msg-2026-06-03T10-13-28-903Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-06-03T10-13-28-903Z" class="timestamp-link"><time datetime="2026-06-03T10:13:28.903Z" data-timestamp="2026-06-03T10:13:28.903Z">2026-06-03T10:13:28.903Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Base directory for this skill: /Users/kerihenare/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/writing-plans</p>
+<h1>Writing Plans</h1>
+<h2>Overview</h2>
+<p>Write comprehensive implementation plans assuming the engineer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.</p>
+<p>Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.</p>
+<p><strong>Announce at start:</strong> "I'm using the writing-plans skill to create the implementation plan."</p>
+<p><strong>Context:</strong> If working in an isolated worktree, it should have been created via the <code>superpowers:using-git-worktrees</code> skill at execution time.</p>
+<p><strong>Save plans to:</strong> <code>docs/superpowers/plans/YYYY-MM-DD-&lt;feature-name&gt;.md</code>
+- (User preferences for plan location override this default)</p>
+<h2>Scope Check</h2>
+<p>If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during brainstorming. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.</p>
+<h2>File Structure</h2>
+<p>Before defining tasks, map out which files will be created or modified and what each one is responsible for. This is where decomposition decisions get locked in.</p>
+<ul>
+<li>Design units with clear boundaries and well-defined interfaces. Each file should have one clear responsibility.</li>
+<li>You reason best about code you can hold in context at once, and your edits are more reliable when files are focused. Prefer smaller, focused files over large ones that do too much.</li>
+<li>Files that change together should live together. Split by responsibility, not by technical layer.</li>
+<li>In existing codebases, follow established patterns. If the codebase uses large files, don't unilaterally restructure - but if a file you're modifying has grown unwieldy, including a split in the plan is reasonable.</li>
+</ul>
+<p>This structure informs the task decomposition. Each task should produce self-contained changes that make sense independently.</p>
+<h2>Bite-Sized Task Granularity</h2>
+<p><strong>Each step is one action (2-5 minutes):</strong>
+- "Write the failing test" - step
+- "Run it to make sure it fails" - step
+- "Implement the minimal code to make the test pass" - step
+- "Run the tests and make sure they pass" - step
+- "Commit" - step</p>
+<h2>Plan Document Header</h2>
+<p><strong>Every plan MUST start with this header:</strong></p>
+<pre><code class="language-markdown"># [Feature Name] Implementation Plan
+
+&gt; **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** [One sentence describing what this builds]
+
+**Architecture:** [2-3 sentences about approach]
+
+**Tech Stack:** [Key technologies/libraries]
+
+---
+</code></pre>
+<h2>Task Structure</h2>
+<pre><code class="language-markdown">### Task N: [Component Name]
+
+**Files:**
+- Create: `exact/path/to/file.py`
+- Modify: `exact/path/to/existing.py:123-145`
+- Test: `tests/exact/path/to/test.py`
+
+- [ ] **Step 1: Write the failing test**
+
+```python
+def test_specific_behavior():
+    result = function(input)
+    assert result == expected
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `pytest tests/path/test.py::test_name -v`
+Expected: FAIL with &quot;function not defined&quot;
+
+- [ ] **Step 3: Write minimal implementation**
+
+```python
+def function(input):
+    return expected
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `pytest tests/path/test.py::test_name -v`
+Expected: PASS
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add tests/path/test.py src/path/file.py
+git commit -m &quot;feat: add specific feature&quot;
+```
+</code></pre>
+<h2>No Placeholders</h2>
+<p>Every step must contain the actual content an engineer needs. These are <strong>plan failures</strong> — never write them:
+- "TBD", "TODO", "implement later", "fill in details"
+- "Add appropriate error handling" / "add validation" / "handle edge cases"
+- "Write tests for the above" (without actual test code)
+- "Similar to Task N" (repeat the code — the engineer may be reading tasks out of order)
+- Steps that describe what to do without showing how (code blocks required for code steps)
+- References to types, functions, or methods not defined in any task</p>
+<h2>Remember</h2>
+<ul>
+<li>Exact file paths always</li>
+<li>Complete code in every step — if a step changes code, show the code</li>
+<li>Exact commands with expected output</li>
+<li>DRY, YAGNI, TDD, frequent commits</li>
+</ul>
+<h2>Self-Review</h2>
+<p>After writing the complete plan, look at the spec with fresh eyes and check the plan against it. This is a checklist you run yourself — not a subagent dispatch.</p>
+<p><strong>1. Spec coverage:</strong> Skim each section/requirement in the spec. Can you point to a task that implements it? List any gaps.</p>
+<p><strong>2. Placeholder scan:</strong> Search your plan for red flags — any of the patterns from the "No Placeholders" section above. Fix them.</p>
+<p><strong>3. Type consistency:</strong> Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called <code>clearLayers()</code> in Task 3 but <code>clearFullLayers()</code> in Task 7 is a bug.</p>
+<p>If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.</p>
+<h2>Execution Handoff</h2>
+<p>After saving the plan, offer execution choice:</p>
+<p><strong>"Plan complete and saved to <code>docs/superpowers/plans/&lt;filename&gt;.md</code>. Two execution options:</strong></p>
+<p><strong>1. Subagent-Driven (recommended)</strong> - I dispatch a fresh subagent per task, review between tasks, fast iteration</p>
+<p><strong>2. Inline Execution</strong> - Execute tasks in this session using executing-plans, batch execution with checkpoints</p>
+<p><strong>Which approach?"</strong></p>
+<p><strong>If Subagent-Driven chosen:</strong>
+- <strong>REQUIRED SUB-SKILL:</strong> Use superpowers:subagent-driven-development
+- Fresh subagent per task + two-stage review</p>
+<p><strong>If Inline Execution chosen:</strong>
+- <strong>REQUIRED SUB-SKILL:</strong> Use superpowers:executing-plans
+- Batch execution with checkpoints for review</p>
+<p>ARGUMENTS: Write docs/2-plan.md based on docs/1-spec.md</p></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-13-35-798Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-13-35-798Z" class="timestamp-link"><time datetime="2026-06-03T10:13:35.798Z" data-timestamp="2026-06-03T10:13:35.798Z">2026-06-03T10:13:35.798Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-13-35-799Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-13-35-799Z" class="timestamp-link"><time datetime="2026-06-03T10:13:35.799Z" data-timestamp="2026-06-03T10:13:35.799Z">2026-06-03T10:13:35.799Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>I'm using the writing-plans skill to create the implementation plan. First, let me gather context: CONTEXT.md for the domain language and the current repo state.</p></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-13-36-745Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-13-36-745Z" class="timestamp-link"><time datetime="2026-06-03T10:13:36.745Z" data-timestamp="2026-06-03T10:13:36.745Z">2026-06-03T10:13:36.745Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01Pd1mFqsjwh5aTNHfBSB1De"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/Users/kerihenare/Work/Drumbeat/breakbeat/main/CONTEXT.md&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-06-03T10-13-36-877Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-06-03T10-13-36-877Z" class="timestamp-link"><time datetime="2026-06-03T10:13:36.877Z" data-timestamp="2026-06-03T10:13:36.877Z">2026-06-03T10:13:36.877Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>1	# Breakbeat
+2	
+3	Finds third-party content about a company from the last 36 months via a background pipeline, and presents it as a reviewable list. Single context.
+4	
+5	## Language
+6	
+7	**Job**:
+8	One run of the pipeline for one company, moving through a state machine from `pending` to a terminal state.
+9	_Avoid_: task, search (a Job *contains* a Search stage)
+10	
+11	**Resolved Identity**:
+12	The company name plus *zero or more* own domains and scraped social handles, established per-Job by the Resolve stage; the anchor every later stage filters against. Domains/handles are optional — a name-only input that resolves no homepage proceeds degraded (with a Warning), leaving Own Channel exclusion entirely to the Classify backstop.
+13	_Avoid_: company profile, match
+14	
+15	**Own Channel**:
+16	A surface the company *controls* — its domains, or its named accounts/profiles on third-party platforms (its LinkedIn page, its X handle, its Substack). Content on a controlled surface is always excluded. Control, not authorship, is the test: a wire-distributed press release or a company-bylined guest post sits on *someone else&#x27;s* editorial surface and is in scope; content *about* the company on any platform is in scope.
+17	_Avoid_: own site (too narrow — misses social accounts); &quot;authored by the company&quot; (wrong test — it would exclude press releases, a required Content Type)
+18	
+19	**Result**:
+20	One search hit returned by the Search stage, stored permanently with a `status` of `included` or `excluded`. Born `included`; Exclusion is the only transition. Scoped to its Job — re-runs produce fresh Results. (&quot;Fetch&quot; is reserved for the one real HTTP fetch: the Resolve homepage fetch.)
+21	_Avoid_: hit, item, link, fetched (Result pages are never fetched — title+snippet is all there is)
+22	
+23	**Exclusion**:
+24	Marking a Result `excluded` with a machine-groupable `exclusion_code` (closed set: `own_channel`, `aggregator`, `ecommerce_review`, `out_of_window`, `duplicate`, `llm_excluded`) plus a nullable human-readable `exclusion_detail` (&quot;of #42&quot;, the LLM&#x27;s stated reason). Soft — never a delete; nothing is dropped except by never being returned by Search.
+25	_Avoid_: drop, delete, filter out (as a verb for the action)
+26	
+27	**Collapse**:
+28	Deduplicating near-identical Results on normalized title; runs at the tail of the Filter stage, over still-`included` Results only (an already-Excluded copy never competes or wins). The winner is the earliest-published copy, losers are Excluded as duplicates. There is no dedup *stage*: exact-URL dedup happens at insert time during Search (DB unique constraint).
+29	_Avoid_: merge, dedupe (say &quot;URL dedup&quot; for the insert-time constraint, &quot;Collapse&quot; for the title pass)
+30	
+31	**Content Type**:
+32	The brief&#x27;s seven categories verbatim (news article, trade publication, blog post, press release, major social post, newsletter, podcast) plus `other` as the explicit escape hatch. Assigned only by the Classify stage and nullable — a failed classify leaves Results &quot;unclassified&quot; (never defaulted to `other`, which is reserved for genuine type ambiguity) under `done_with_warnings`.
+33	
+34	**Warning**:
+35	A recorded note that a stage completed its purpose *partially* (3 of 18 search queries failed, no homepage resolved, classify errored leaving Results unclassified). A stage that can&#x27;t serve its purpose at all fails the Job instead. Terminal state is `done_with_warnings` iff the Job&#x27;s warning list is non-empty.
+36	_Avoid_: error (errors fail the job), partial failure (a Warning is a partial *success*)
+37	
+38	**Angle Query**:
+39	A search query phrased around an event type (&quot;X funding&quot;, &quot;X acquisition&quot;) rather than a content type — recall comes from more angles, not more slices.
+40	
+41	**Time Slice**:
+42	One 12-month `start_date`/`end_date` window of a query; applied only to news and press releases, where dates are reliable.
+43	
+44	## Relationships
+45	
+46	- A **Job** belongs to one company and produces many **Results**; the company row is just the durable raw input (name/URL) — re-runs reuse it but resolve fresh
+47	- A **Job**&#x27;s Resolve stage produces one **Resolved Identity** (job-scoped); Search, Filter, and Classify all consume it
+48	- A **Collapse** Excludes all but one of a set of near-duplicate still-`included` **Results**
+49	- An `included` **Result** is assigned one **Content Type** by the Classify stage — or none, if classify fails (**Warning**)
+50	- A **Job** accumulates **Warnings**; any Warning turns `done` into `done_with_warnings`
+51	
+52	## Example dialogue
+53	
+54	&gt; **Dev:** &quot;The heuristic pass dropped a bunch of Reddit links.&quot;
+55	&gt; **Domain expert:** &quot;Nothing is *dropped* — they&#x27;re **Excluded** as aggregators, with the reason on the row. They&#x27;ll show in the collapsed excluded section.&quot;
+56	&gt; **Dev:** &quot;And the company&#x27;s LinkedIn posts?&quot;
+57	&gt; **Domain expert:** &quot;**Own Channel**, Excluded. But a journalist&#x27;s LinkedIn post *about* the company is in scope — Own Channel is about the author, not the platform.&quot;
+58	
+59	## Flagged ambiguities
+60	
+61	- &quot;drop&quot; was used for both *never returned* and *filtered out* — resolved: filtered-out Results are **Excluded** (soft, with reason); only content never returned by Search is absent.
+62	- &quot;own site&quot; vs **Own Channel** — resolved: exclusion covers the company&#x27;s accounts on third-party platforms, not just its domains, and never third-party content on those platforms.
+63	- **Own Channel** as &quot;authored by the company&quot; contradicted the brief — press releases are company-authored by definition yet a required Content Type. Resolved: the test is *control of the surface*, not authorship; wire releases and guest posts are in scope.
+64	- &quot;fetched&quot; implied Result pages are retrieved — they never are (out of scope). Resolved: Results are *returned* by Search; &quot;fetch&quot; names only the Resolve homepage fetch.
+65	- Whether an Excluded copy could win a **Collapse** (earliest-published aggregator copy swallowing legitimate coverage) — resolved: the Collapse pool is `included` Results only.
+66	- Dedup appeared as both a pipeline stage and an insert-time constraint — resolved: no dedup stage exists; URL dedup fires at insert (Search), title-**Collapse** runs at the tail of Filter, before Classify (so the LLM never pays for duplicates).
+67	</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-13-38-867Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-13-38-867Z" class="timestamp-link"><time datetime="2026-06-03T10:13:38.867Z" data-timestamp="2026-06-03T10:13:38.867Z">2026-06-03T10:13:38.867Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_0148miueVmJdC5No91SkohHx">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Inspect repo structure and existing config files</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">ls -la /Users/kerihenare/Work/Drumbeat/breakbeat/main /Users/kerihenare/Work/Drumbeat/breakbeat/main/docs /Users/kerihenare/Work/Drumbeat/breakbeat/main/src 2&gt;/dev/null; cat /Users/kerihenare/Work/Drumbeat/breakbeat/main/package.json 2&gt;/dev/null; cat /Users/kerihenare/Work/Drumbeat/breakbeat/main/.env.example 2&gt;/dev/null; cat /Users/kerihenare/Work/Drumbeat/breakbeat/main/.nvmrc 2&gt;/dev/null</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-06-03T10-13-39-088Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-06-03T10-13-39-088Z" class="timestamp-link"><time datetime="2026-06-03T10:13:39.088Z" data-timestamp="2026-06-03T10:13:39.088Z">2026-06-03T10:13:39.088Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>/Users/kerihenare/Work/Drumbeat/breakbeat/main:
+drwxr-xr-x@    - kerihenare  3 Jun 21:19 .claude
+drwxr-xr-x@    - kerihenare  3 Jun 19:36 .cursor
+drwxr-xr-x     - kerihenare  3 Jun 21:59 docs
+drwxr-xr-x@    - kerihenare  3 Jun 19:49 node_modules
+drwxr-xr-x@    - kerihenare  3 Jun 19:37 src
+.rw-r--r--@ 6.1k kerihenare  3 Jun 18:53 .DS_Store
+.rw-r--r--@  201 kerihenare  3 Jun 20:58 .env
+.rw-r--r--@  204 kerihenare  3 Jun 21:09 .env.example
+.rw-r--r--@   70 kerihenare  3 Jun 18:38 .git
+.rw-r--r--@ 2.2k kerihenare  3 Jun 22:00 .gitignore
+.rw-r--r--@    2 kerihenare  3 Jun 19:14 .nvmrc
+.rw-r--r--@ 1.2k kerihenare  3 Jun 19:14 biome.json
+.rw-r--r--@ 2.4k kerihenare  3 Jun 22:09 CLAUDE.md
+.rw-r--r--@ 6.1k kerihenare  3 Jun 21:34 CONTEXT.md
+.rw-r--r--@ 1.1k kerihenare  3 Jun 18:38 LICENSE
+.rw-r--r--@  992 kerihenare  3 Jun 22:00 package.json
+.rw-r--r--@ 3.9k kerihenare  3 Jun 19:49 pnpm-lock.yaml
+.rw-r--r--@   11 kerihenare  3 Jun 19:19 README.md
+.rw-r--r--@  373 kerihenare  3 Jun 19:49 tsconfig.json
+
+/Users/kerihenare/Work/Drumbeat/breakbeat/main/docs:
+.rw-r--r--@ 1.9k kerihenare  3 Jun 19:18 0-brief.md
+.rw-r--r--@  28k kerihenare  3 Jun 21:59 1-spec.md
+
+/Users/kerihenare/Work/Drumbeat/breakbeat/main/src:
+.rw-r--r--@ 30 kerihenare  3 Jun 20:33 main.ts
+{
+  &quot;name&quot;: &quot;@kerihenare/breakbeat&quot;,
+  &quot;description&quot;: &quot;Breakbeat is a tool for finding content about a company&quot;,
+  &quot;author&quot;: &quot;Keri Henare &lt;keri@henare.co.nz&gt;&quot;,
+  &quot;private&quot;: true,
+  &quot;license&quot;: &quot;MIT&quot;,
+  &quot;version&quot;: &quot;0.0.1&quot;,
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;main&quot;: &quot;./src/main.ts&quot;,
+  &quot;repository&quot;: {
+    &quot;type&quot;: &quot;git&quot;,
+    &quot;url&quot;: &quot;https://github.com/kerihenare/breakbeat.git&quot;
+  },
+  &quot;scripts&quot;: {
+    &quot;dev&quot;: &quot;node --env-file-if-exists=.env --watch src/main.ts&quot;,
+    &quot;lint&quot;: &quot;biome lint --write .&quot;,
+    &quot;lint:fix&quot;: &quot;biome check --write .&quot;,
+    &quot;test&quot;: &quot;node --test \&quot;src/**/*.test.ts\&quot;&quot;,
+    &quot;test:watch&quot;: &quot;node --test --watch \&quot;src/**/*.test.ts\&quot;&quot;,
+    &quot;db:reset&quot;: &quot;rm -f data/breakbeat.db&quot;
+  },
+  &quot;dependencies&quot;: {},
+  &quot;devDependencies&quot;: {
+    &quot;@biomejs/biome&quot;: &quot;^2.4.16&quot;,
+    &quot;@types/node&quot;: &quot;^25.9.1&quot;,
+    &quot;typescript&quot;: &quot;^6.0.3&quot;
+  },
+  &quot;packageManager&quot;: &quot;pnpm@11.5.1+sha512.93f7b57422ea7068257235b4c16eb60762eb68e1dc23723199cc739043ea9be2c4143274a399d8c6defa2b1176226d9ca1c4b63482d6200c1a8fbaa78c1d1485&quot;
+}# Anthropic API key (Claude Haiku classification) — https://console.anthropic.com/settings/keys
+ANTHROPIC_API_KEY=sk-***
+
+# Tavily search API key — https://app.tavily.com/home
+TAVILY_API_KEY=tvly-***
+26</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-20-18-932Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-20-18-932Z" class="timestamp-link"><time datetime="2026-06-03T10:20:18.932Z" data-timestamp="2026-06-03T10:20:18.932Z">2026-06-03T10:20:18.932Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-20-18-934Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-20-18-934Z" class="timestamp-link"><time datetime="2026-06-03T10:20:18.934Z" data-timestamp="2026-06-03T10:20:18.934Z">2026-06-03T10:20:18.934Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-26-27-200Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-26-27-200Z" class="timestamp-link"><time datetime="2026-06-03T10:26:27.200Z" data-timestamp="2026-06-03T10:26:27.200Z">2026-06-03T10:26:27.200Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-26-27-232Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-26-27-232Z" class="timestamp-link"><time datetime="2026-06-03T10:26:27.232Z" data-timestamp="2026-06-03T10:26:27.232Z">2026-06-03T10:26:27.232Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-27-30-597Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-27-30-597Z" class="timestamp-link"><time datetime="2026-06-03T10:27:30.597Z" data-timestamp="2026-06-03T10:27:30.597Z">2026-06-03T10:27:30.597Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01PtxVHKxASfd6sgfyFY8JKf">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">2-plan.md</span></div>
+<div class="file-tool-fullpath">/Users/kerihenare/Work/Drumbeat/breakbeat/main/docs/2-plan.md</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content"># Breakbeat Implementation Plan
+
+&gt; **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** A local-only Express web app that runs a background Job pipeline (Resolve → Search → Filter → Classify) finding third-party content about a company from the last 36 months, presented as a reviewable, deduplicated list.
+
+**Architecture:** Single Node.js v26 process: Express + Nunjucks (autoescape) serve HTML; HTMX load-polling re-renders a job fragment every 2s; an in-process FIFO queue (concurrency 1) drives a job state machine persisted in SQLite (`node:sqlite`). Retrieval is ~18 parallel Tavily queries; filtering is deterministic heuristics + title Collapse, then one batched Claude Haiku classification pass with structured outputs. Source of truth for all behaviour: `docs/1-spec.md`; domain language: `CONTEXT.md` (Job, Result, Exclusion, Collapse, Own Channel, Warning — use these terms exactly in code, comments, and tests).
+
+**Tech Stack:** Node v26 native TS (erasable syntax only — no `enum`/`namespace`/ctor param properties), Express, Nunjucks, HTMX (vendored), `node:sqlite`, `@tavily/core`, `@anthropic-ai/sdk`, Biome, pnpm, `node --test`.
+
+---
+
+## Design summary
+
+These sections condense `docs/1-spec.md` into the decisions the tasks below implement. Where this plan and the spec disagree, the spec wins.
+
+### Stack choice
+
+| Concern | Choice | Why |
+|---|---|---|
+| Runtime | Node.js v26, native type stripping | No build step; `.nvmrc` pins it. Erasable TS syntax only |
+| Web | Express + Nunjucks (`autoescape: true`) | Boring, conventional; escaping is the engine default, `| safe` is the greppable opt-out |
+| Live status | HTMX load-polling (every 2s, `hx-swap=&#34;outerHTML&#34;`) | Stop-condition lives server-side in the template; no client JS state |
+| Persistence | SQLite via `node:sqlite`, WAL mode | Zero deps, zero setup; WAL lets the poll read while the pipeline writes |
+| Jobs | In-process async FIFO queue, concurrency 1 | Local-only brief; the job table + state machine is the portable interface |
+| Search | Tavily, `search_depth: &#34;advanced&#34;` everywhere | Classify sees only title+snippet, so snippet quality *is* classification quality |
+| Classification | One batched Claude Haiku pass, structured outputs | Heuristics handle the clear-cut 80%; LLM reserved for genuine ambiguity |
+| Env | `node --env-file-if-exists=.env` | No dotenv; keyless clone still boots to a friendly error |
+
+### App structure
+
+```
+src/
+  main.ts                    # Express bootstrap, Nunjucks config, env check, serves /public, mounts routes
+  db.ts                      # node:sqlite open + pragmas + CREATE TABLE IF NOT EXISTS (no migrations)
+  routes/jobs.ts             # GET / (list+form), POST / (create job, 303), GET /:id (page or fragment)
+  views/
+    layout.njk               # page chrome
+    index.njk                # jobs list + new-job form
+    job.njk                  # full job page (wraps the fragment)
+    _job.njk                 # the self-replacing HTMX fragment: status header + results
+  jobs/
+    queue.ts                 # FIFO queue + job state machine (transition())
+    queue.test.ts
+    pipeline.ts              # orchestrates Resolve → Search → Filter → Classify
+    resolve.ts               # identity resolution: homepage fetch (SSRF-guarded), handle scrape, cascade
+    resolve.test.ts
+  search/
+    tavily.ts                # @tavily/core client + the ~18-query strategy + insert-time URL dedup
+    tavily.test.ts           # query-strategy shape only (no API calls in tests)
+  filter/
+    normalize.ts             # normalizeUrl (dedup key) + normalizeTitle (Collapse key)
+    normalize.test.ts
+    heuristics.ts            # blocklists, exclusion rules, date window, Collapse
+    heuristics.test.ts
+    classify.ts              # batched Haiku structured-output calls + ID sanity layer
+public/
+  htmx.min.js                # vendored from node_modules, committed — no CDN
+data/                        # gitignored; breakbeat.db created at boot
+```
+
+API clients (`tavily.ts`, `classify.ts`, the fetch in `resolve.ts`) are deliberately untested per the spec; everything pure has co-located tests.
+
+### Data model
+
+Four tables, created idempotently at boot. No migrations (deliberate — `pnpm db:reset` deletes the file).
+
+```sql
+CREATE TABLE IF NOT EXISTS companies (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  name        TEXT NOT NULL,                  -- raw input, trimmed (display label)
+  url         TEXT,                           -- raw input URL as given
+  url_host    TEXT,                           -- normalized host — the identity key when present
+  created_at  TEXT NOT NULL DEFAULT (datetime(&#39;now&#39;))
+);
+
+CREATE TABLE IF NOT EXISTS jobs (
+  id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+  company_id             INTEGER NOT NULL REFERENCES companies(id),
+  status                 TEXT NOT NULL DEFAULT &#39;pending&#39; CHECK (status IN
+    (&#39;pending&#39;,&#39;resolving&#39;,&#39;searching&#39;,&#39;filtering&#39;,&#39;classifying&#39;,
+     &#39;done&#39;,&#39;failed&#39;,&#39;done_with_warnings&#39;)),
+  window_start           TEXT,                -- date-only UTC; computed ONCE at Resolve
+  window_end             TEXT,
+  resolved_name          TEXT,
+  resolved_domains       TEXT NOT NULL DEFAULT &#39;[]&#39;,  -- JSON array of hosts
+  resolved_handles       TEXT NOT NULL DEFAULT &#39;[]&#39;,  -- JSON array of profile-URL prefixes
+  resolution_provenance  TEXT CHECK (resolution_provenance IN
+    (&#39;url_provided&#39;,&#39;heuristic&#39;,&#39;llm&#39;,&#39;none&#39;)),
+  error                  TEXT,                -- human-readable; set when status = failed
+  created_at             TEXT NOT NULL DEFAULT (datetime(&#39;now&#39;))
+);
+
+CREATE TABLE IF NOT EXISTS warnings (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  job_id     INTEGER NOT NULL REFERENCES jobs(id),
+  message    TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime(&#39;now&#39;))
+);
+
+CREATE TABLE IF NOT EXISTS results (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  job_id           INTEGER NOT NULL REFERENCES jobs(id),
+  url              TEXT NOT NULL,             -- original URL; what the UI links to
+  normalized_url   TEXT NOT NULL,             -- the dedup key (rules in filter/normalize.ts)
+  title            TEXT NOT NULL,
+  snippet          TEXT,
+  source_domain    TEXT NOT NULL,
+  published_date   TEXT,                      -- nullable → &#34;date unknown&#34; badge
+  status           TEXT NOT NULL DEFAULT &#39;included&#39; CHECK (status IN (&#39;included&#39;,&#39;excluded&#39;)),
+  exclusion_code   TEXT CHECK (exclusion_code IN
+    (&#39;own_channel&#39;,&#39;aggregator&#39;,&#39;ecommerce_review&#39;,&#39;out_of_window&#39;,&#39;duplicate&#39;,&#39;llm_excluded&#39;)),
+  exclusion_detail TEXT,                      -- &#34;of #42&#34;, &#34;LLM&#34;, …
+  content_type     TEXT CHECK (content_type IN
+    (&#39;news&#39;,&#39;trade_publication&#39;,&#39;blog_post&#39;,&#39;press_release&#39;,
+     &#39;social_post&#39;,&#39;newsletter&#39;,&#39;podcast&#39;,&#39;other&#39;)),  -- nullable: unclassified ≠ other
+  confidence       TEXT CHECK (confidence IN (&#39;high&#39;,&#39;low&#39;)),
+  created_at       TEXT NOT NULL DEFAULT (datetime(&#39;now&#39;)),
+  UNIQUE (job_id, normalized_url)             -- exact-URL dedup IS this constraint
+);
+```
+
+Key invariants (from CONTEXT.md): Results are born `included`; Exclusion is the only transition and is soft (never a delete); `content_type` stays NULL on classify failure (never defaulted to `other`); the 36-month window is computed once at Resolve and read everywhere else.
+
+### Background job approach
+
+- `POST /` inserts a `pending` job row and enqueues its id; an in-process FIFO (concurrency 1) runs `pipeline.run(jobId)` jobs one at a time. The jobs list makes the queue visible (a `pending` job behind a running one).
+- The state machine `pending → resolving → searching → filtering → classifying → done | failed | done_with_warnings` lives in `jobs/queue.ts` as a `transition(jobId, toState, message?)` function that validates legal transitions and writes the row — the general shape the spec wants for the future boot-sweep/cancel features.
+- Uncaught pipeline error → `transition(id, &#39;failed&#39;, message)`. Terminal state is `done_with_warnings` iff the job&#39;s warning list is non-empty.
+- Known, accepted gap (spec §5): a job mid-flight at process exit stays in its running state forever. Named in the write-up, not fixed.
+
+### Search / retrieval strategy
+
+~18 Tavily queries per job, all `search_depth: &#34;advanced&#34;`, `max_results: 20`, all with `exclude_domains` = own domains + aggregator blocklist, fired concurrently via `Promise.allSettled`:
+
+1. **Per content type (7)** — one query per brief category (&#34;X news&#34;, &#34;X press release&#34;, &#34;X podcast interview&#34;, …), 36-month window.
+2. **Time-sliced (6)** — news and press releases only, one query per 12-month `start_date`/`end_date` slice; counters recency bias where dates are reliable. Never applied to dateless types.
+3. **Angle queries (5)** — &#34;X funding&#34;, &#34;X acquisition&#34;, &#34;X leadership interview&#34;, &#34;X partnership&#34;, &#34;X lawsuit OR controversy&#34;. Overlap is absorbed by URL dedup.
+
+Tavily params: news-ish queries (type-queries for news/press release + all six slices) use `topic: &#34;news&#34;` (reliable `published_date`, real `start_date`/`end_date`); everything else `topic: &#34;general&#34;` + `time_range: &#34;3y&#34;` best-effort. Per-job caps (named constants, one place): max 20 queries, 20 results each, classify cap 400 in chunks of 50.
+
+### Result filtering rules
+
+Funnel order (cheap → expensive), all via soft Exclusion with a closed code set:
+
+1. **Insert-time URL dedup** — the `UNIQUE(job_id, normalized_url)` constraint; not a stage.
+2. **Heuristics** (`filter/heuristics.ts`): own domains/subdomains and own social-profile URL prefixes → `own_channel`; aggregator blocklist (`news.ycombinator.com`, `reddit.com`, `slashdot.org`, `lobste.rs`, `digg.com`, `flipboard.com`, `feedly.com`, `news.google.com`, `apple.news` — Medium deliberately NOT listed) → `aggregator`; review domains (`g2.com`, `capterra.com`, `trustpilot.com`, `trustradius.com`, `getapp.com`, `softwareadvice.com`, `producthunt.com`), ecommerce path segments (`/product/`, `/products/`, `/shop/`, `/store/`, `/buy/`, `/pricing/`, `/vs/`, `/compare/`, `/alternatives/`), and anchored title regexes (`^best .* (alternatives|tools|software)`, `(review|comparison) of`, `^top \d+`) → `ecommerce_review` (`vs` is a path pattern only, never a title match); published date before `window_start` → `out_of_window`. **Dateless results are kept and flagged**, never excluded.
+3. **Collapse** (tail of Filter, still-`included` Results only): group by normalized title (≥25 chars after normalization); winner = earliest published date, falling back to first-seen; losers → `duplicate`, detail &#34;of #N&#34;. Only collapse when published dates are ≤14 days apart (or unknown).
+4. **Classify backstop** (Haiku): catches what heuristics can&#39;t see — own channels missed by the scrape, title-`vs` comparisons, judgement-call review pages. Writes the same exclusion codes, `exclusion_detail = &#39;LLM&#39;`.
+
+### Deduplication strategy
+
+Two distinct mechanisms, two pinned normalizations (`filter/normalize.ts`):
+
+- **normalizeUrl** (exact-URL dedup key, per job): lowercase host, strip `www.`, drop scheme, strip fragment, strip only known tracking params (`utm_*`, `fbclid`, `gclid`, `mc_cid`, `ref`, `source`) keeping everything else, sort remaining params, strip trailing slash, preserve path case.
+- **normalizeTitle** (Collapse key): NFKC → outlet-suffix strip (trailing ` | X` / ` – X` / ` - X`, final separator only, remainder ≥25 chars and segment ≤40) → lowercase → strip punctuation → collapse whitespace → exact match.
+
+### Status lifecycle
+
+`pending → resolving → searching → filtering → classifying → done | failed | done_with_warnings`
+
+Every stage transition updates the job row; the HTMX fragment re-renders it every 2s with per-stage counters (&#34;47 fetched · 12 excluded · 31 classified&#34; — one `GROUP BY`). When the job reaches a terminal state the server renders the fragment *without* polling attributes and polling stops naturally.
+
+### Error handling
+
+**Degraded-stage principle:** partial completion → Warning row + continue; total stage failure → job `failed` with a human-readable message in the UI.
+
+| Event | Outcome |
+|---|---|
+| Some Tavily queries fail | Warning &#34;14/18 queries succeeded&#34; |
+| All Tavily queries fail | Job `failed` |
+| No homepage resolved (name-only) | Warning; proceed degraded — zero domains/handles, Classify carries own-channel alone |
+| LLM-assisted resolution | Warning &#34;homepage identified with low confidence — verify&#34; |
+| Classify call errors | Warning; affected Results shown unclassified (`content_type` NULL) |
+| Homepage fetch hangs/oversized | 5s timeout / 1MB cap → treated as unresolved (degraded path) |
+| Missing API key at boot | Friendly named-key message + clean exit, not a stack trace |
+
+### Setup instructions (what the README must say)
+
+```bash
+nvm use                       # Node v26 (.nvmrc)
+pnpm install
+cp .env.example .env          # then set ANTHROPIC_API_KEY + TAVILY_API_KEY
+pnpm dev                      # http://localhost:3000
+pnpm test                     # unit tests, no network
+pnpm db:reset                 # fresh demo
+```
+
+### Risks and trade-offs
+
+| Risk / trade-off | Mitigation / acceptance |
+|---|---|
+| Tavily structured-output / SDK params drift from spec assumptions | Verify against SDK at integration time (Task 10); params are named constants in one file |
+| Anthropic structured outputs flag unavailable in SDK | Fallback pinned in spec: prompt-requested JSON + parse + validate + one retry |
+| Wrong company resolved (name-only input) | Provenance surfaced in status line + low-confidence Warning; per-job caps bound the damage; form hints &#34;provide the URL&#34; |
+| Prompt injection via hostile snippets | Structured outputs, closed enums, no free-text echo field, no tool use; worst case = self-misclassification, visible via soft Exclusion |
+| SSRF via the one homepage fetch | Private/loopback/link-local IP rejection, redirect cap 3 re-checking each hop, 5s/1MB caps, `https?:` only; DNS-rebinding named-and-skipped |
+| Process restart orphans a running job | Accepted (spec §5); boot-time sweep is the named next step |
+| Cost: ~36 Tavily credits + ~4–6 Haiku calls per job | ≈27 free-tier jobs/month; caps are constants, downgrade is one line |
+| Recency bias in search ranking | Time-sliced news/PR queries; first thing cut under pressure after handle-scraping |
+| FIFO-1 queue: slow job blocks the queue | Visible in jobs list as `pending`; liveness guards (timeouts) bound each stage |
+
+**If time runs short, cut in spec §4 order:** social handle scraping → time-sliced queries → Resolve LLM fallback → per-hop redirect re-checking (set cap to 0) → slice-5 polish.
+
+---
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-06-03T10-27-30-875Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-06-03T10-27-30-875Z" class="timestamp-link"><time datetime="2026-06-03T10:27:30.875Z" data-timestamp="2026-06-03T10:27:30.875Z">2026-06-03T10:27:30.875Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /Users/kerihenare/Work/Drumbeat/breakbeat/main/docs/2-plan.md (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-27-56-718Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-27-56-718Z" class="timestamp-link"><time datetime="2026-06-03T10:27:56.718Z" data-timestamp="2026-06-03T10:27:56.718Z">2026-06-03T10:27:56.718Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-27-56-745Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-27-56-745Z" class="timestamp-link"><time datetime="2026-06-03T10:27:56.745Z" data-timestamp="2026-06-03T10:27:56.745Z">2026-06-03T10:27:56.745Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-28-45-767Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-28-45-767Z" class="timestamp-link"><time datetime="2026-06-03T10:28:45.767Z" data-timestamp="2026-06-03T10:28:45.767Z">2026-06-03T10:28:45.767Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01VPwSxzSvBraEkRbYDN3XTn">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Append Tasks 1-3 to docs/2-plan.md</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">cat &gt;&gt; /Users/kerihenare/Work/Drumbeat/breakbeat/main/docs/2-plan.md &lt;&lt;&#39;PLAN_EOF&#39;
+## Tasks
+
+Tracer-bullet ordering (spec §4): after Task 6 the whole loop works with a fake pipeline; every later task upgrades one stage. Run `pnpm lint:fix` before every commit.
+
+&gt; **Conventions for all tasks:** imports between local files use explicit `.ts` extensions (required by Node type stripping). Tests are co-located, use `node:test` + `node:assert/strict`, and never touch the network or the real DB file — pure functions get plain unit tests; DB-touching tests use `createDb(&#34;:memory:&#34;)`. Erasable TS syntax only.
+
+### Task 1: Dependencies, vendored HTMX, gitignore
+
+**Files:**
+- Modify: `package.json` (via pnpm)
+- Create: `public/htmx.min.js` (vendored copy, committed)
+- Modify: `.gitignore`
+
+- [ ] **Step 1: Install runtime + dev dependencies**
+
+```bash
+pnpm add express nunjucks @tavily/core @anthropic-ai/sdk htmx.org
+pnpm add -D @types/express @types/nunjucks
+```
+
+- [ ] **Step 2: Vendor HTMX into /public (no CDN — clone → run stays self-contained)**
+
+```bash
+mkdir -p public
+cp node_modules/htmx.org/dist/htmx.min.js public/htmx.min.js
+```
+
+- [ ] **Step 3: Ensure `data/` is gitignored and `public/htmx.min.js` is not**
+
+Check `.gitignore` contains a `data/` line (add if missing). Verify with:
+
+```bash
+git check-ignore data/ &amp;&amp; git check-ignore public/htmx.min.js; echo &#34;exit $? (htmx must NOT be ignored)&#34;
+```
+
+Expected: `data/` prints (ignored); the htmx check exits non-zero (not ignored).
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add package.json pnpm-lock.yaml public/htmx.min.js .gitignore
+git commit -m &#34;chore: add runtime deps, vendor htmx&#34;
+```
+
+### Task 2: Database schema (`db.ts`)
+
+**Files:**
+- Create: `src/db.ts`
+- Test: `src/db.test.ts`
+
+- [ ] **Step 1: Write the failing tests**
+
+```ts
+// src/db.test.ts
+import assert from &#34;node:assert/strict&#34;;
+import { test } from &#34;node:test&#34;;
+import { createDb } from &#34;./db.ts&#34;;
+
+function seedJob(db: ReturnType&lt;typeof createDb&gt;): number {
+  db.prepare(&#34;INSERT INTO companies (name) VALUES (&#39;Acme&#39;)&#34;).run();
+  const { lastInsertRowid } = db
+    .prepare(&#34;INSERT INTO jobs (company_id) VALUES (1)&#34;)
+    .run();
+  return Number(lastInsertRowid);
+}
+
+test(&#34;results are born included&#34;, () =&gt; {
+  const db = createDb(&#34;:memory:&#34;);
+  const jobId = seedJob(db);
+  db.prepare(
+    &#34;INSERT INTO results (job_id, url, normalized_url, title, source_domain) VALUES (?, &#39;https://a.com/x&#39;, &#39;a.com/x&#39;, &#39;A story&#39;, &#39;a.com&#39;)&#34;,
+  ).run(jobId);
+  const row = db.prepare(&#34;SELECT status FROM results WHERE id = 1&#34;).get() as {
+    status: string;
+  };
+  assert.equal(row.status, &#34;included&#34;);
+});
+
+test(&#34;normalized_url is unique per job, not globally&#34;, () =&gt; {
+  const db = createDb(&#34;:memory:&#34;);
+  const jobId = seedJob(db);
+  const insert = db.prepare(
+    &#34;INSERT INTO results (job_id, url, normalized_url, title, source_domain) VALUES (?, &#39;https://a.com/x&#39;, &#39;a.com/x&#39;, &#39;A story&#39;, &#39;a.com&#39;)&#34;,
+  );
+  insert.run(jobId);
+  assert.throws(() =&gt; insert.run(jobId), /UNIQUE/);
+  const { lastInsertRowid } = db
+    .prepare(&#34;INSERT INTO jobs (company_id) VALUES (1)&#34;)
+    .run();
+  insert.run(Number(lastInsertRowid)); // same URL, different job: fine
+});
+
+test(&#34;exclusion_code is a closed set&#34;, () =&gt; {
+  const db = createDb(&#34;:memory:&#34;);
+  const jobId = seedJob(db);
+  assert.throws(
+    () =&gt;
+      db
+        .prepare(
+          &#34;INSERT INTO results (job_id, url, normalized_url, title, source_domain, status, exclusion_code) VALUES (?, &#39;u&#39;, &#39;n&#39;, &#39;t&#39;, &#39;d&#39;, &#39;excluded&#39;, &#39;spam&#39;)&#34;,
+        )
+        .run(jobId),
+    /CHECK/,
+  );
+});
+
+test(&#34;new jobs start pending&#34;, () =&gt; {
+  const db = createDb(&#34;:memory:&#34;);
+  const jobId = seedJob(db);
+  const row = db.prepare(&#34;SELECT status FROM jobs WHERE id = ?&#34;).get(jobId) as {
+    status: string;
+  };
+  assert.equal(row.status, &#34;pending&#34;);
+});
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run: `pnpm test`
+Expected: FAIL — `Cannot find module &#39;./db.ts&#39;`
+
+- [ ] **Step 3: Write `src/db.ts`**
+
+The schema is exactly the **Data model** section above. `createDb` is the testable factory; `getDb` is the lazy app singleton.
+
+```ts
+// src/db.ts
+import { mkdirSync } from &#34;node:fs&#34;;
+import { DatabaseSync } from &#34;node:sqlite&#34;;
+
+const SCHEMA = `
+CREATE TABLE IF NOT EXISTS companies (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  name        TEXT NOT NULL,
+  url         TEXT,
+  url_host    TEXT,
+  created_at  TEXT NOT NULL DEFAULT (datetime(&#39;now&#39;))
+);
+
+CREATE TABLE IF NOT EXISTS jobs (
+  id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+  company_id             INTEGER NOT NULL REFERENCES companies(id),
+  status                 TEXT NOT NULL DEFAULT &#39;pending&#39; CHECK (status IN
+    (&#39;pending&#39;,&#39;resolving&#39;,&#39;searching&#39;,&#39;filtering&#39;,&#39;classifying&#39;,
+     &#39;done&#39;,&#39;failed&#39;,&#39;done_with_warnings&#39;)),
+  window_start           TEXT,
+  window_end             TEXT,
+  resolved_name          TEXT,
+  resolved_domains       TEXT NOT NULL DEFAULT &#39;[]&#39;,
+  resolved_handles       TEXT NOT NULL DEFAULT &#39;[]&#39;,
+  resolution_provenance  TEXT CHECK (resolution_provenance IN
+    (&#39;url_provided&#39;,&#39;heuristic&#39;,&#39;llm&#39;,&#39;none&#39;)),
+  error                  TEXT,
+  created_at             TEXT NOT NULL DEFAULT (datetime(&#39;now&#39;))
+);
+
+CREATE TABLE IF NOT EXISTS warnings (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  job_id     INTEGER NOT NULL REFERENCES jobs(id),
+  message    TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime(&#39;now&#39;))
+);
+
+CREATE TABLE IF NOT EXISTS results (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  job_id           INTEGER NOT NULL REFERENCES jobs(id),
+  url              TEXT NOT NULL,
+  normalized_url   TEXT NOT NULL,
+  title            TEXT NOT NULL,
+  snippet          TEXT,
+  source_domain    TEXT NOT NULL,
+  published_date   TEXT,
+  status           TEXT NOT NULL DEFAULT &#39;included&#39; CHECK (status IN (&#39;included&#39;,&#39;excluded&#39;)),
+  exclusion_code   TEXT CHECK (exclusion_code IN
+    (&#39;own_channel&#39;,&#39;aggregator&#39;,&#39;ecommerce_review&#39;,&#39;out_of_window&#39;,&#39;duplicate&#39;,&#39;llm_excluded&#39;)),
+  exclusion_detail TEXT,
+  content_type     TEXT CHECK (content_type IN
+    (&#39;news&#39;,&#39;trade_publication&#39;,&#39;blog_post&#39;,&#39;press_release&#39;,
+     &#39;social_post&#39;,&#39;newsletter&#39;,&#39;podcast&#39;,&#39;other&#39;)),
+  confidence       TEXT CHECK (confidence IN (&#39;high&#39;,&#39;low&#39;)),
+  created_at       TEXT NOT NULL DEFAULT (datetime(&#39;now&#39;)),
+  UNIQUE (job_id, normalized_url)
+);
+`;
+
+export function createDb(path: string): DatabaseSync {
+  const db = new DatabaseSync(path);
+  // WAL: the HTMX poll reads while the pipeline writes; rollback-journal
+  // mode can hit SQLITE_BUSY on that overlap.
+  db.exec(&#34;PRAGMA journal_mode = WAL&#34;);
+  db.exec(&#34;PRAGMA foreign_keys = ON&#34;);
+  db.exec(SCHEMA);
+  return db;
+}
+
+let instance: DatabaseSync | undefined;
+
+export function getDb(): DatabaseSync {
+  if (!instance) {
+    mkdirSync(&#34;data&#34;, { recursive: true });
+    instance = createDb(&#34;data/breakbeat.db&#34;);
+  }
+  return instance;
+}
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run: `pnpm test`
+Expected: PASS (4 tests)
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/db.ts src/db.test.ts
+git commit -m &#34;feat: sqlite schema — jobs, results (soft exclusion), warnings&#34;
+```
+
+### Task 3: Job state machine + FIFO queue (`jobs/queue.ts`)
+
+**Files:**
+- Create: `src/jobs/queue.ts`
+- Test: `src/jobs/queue.test.ts`
+
+The state machine exposes a general `transition(db, jobId, toState, message)` so the future boot-sweep and cancel button slot in without pipeline changes (spec §5).
+
+- [ ] **Step 1: Write the failing tests**
+
+```ts
+// src/jobs/queue.test.ts
+import assert from &#34;node:assert/strict&#34;;
+import { test } from &#34;node:test&#34;;
+import { createDb } from &#34;../db.ts&#34;;
+import { addWarning, createQueue, transition } from &#34;./queue.ts&#34;;
+
+function dbWithJob() {
+  const db = createDb(&#34;:memory:&#34;);
+  db.prepare(&#34;INSERT INTO companies (name) VALUES (&#39;Acme&#39;)&#34;).run();
+  db.prepare(&#34;INSERT INTO jobs (company_id) VALUES (1)&#34;).run();
+  return db;
+}
+
+function status(db: ReturnType&lt;typeof createDb&gt;): string {
+  return (db.prepare(&#34;SELECT status FROM jobs WHERE id = 1&#34;).get() as { status: string }).status;
+}
+
+test(&#34;legal transitions walk the pipeline&#34;, () =&gt; {
+  const db = dbWithJob();
+  for (const s of [&#34;resolving&#34;, &#34;searching&#34;, &#34;filtering&#34;, &#34;classifying&#34;, &#34;done&#34;]) {
+    transition(db, 1, s);
+    assert.equal(status(db), s);
+  }
+});
+
+test(&#34;illegal transition throws and leaves status untouched&#34;, () =&gt; {
+  const db = dbWithJob();
+  assert.throws(() =&gt; transition(db, 1, &#34;classifying&#34;), /illegal transition/);
+  assert.equal(status(db), &#34;pending&#34;);
+});
+
+test(&#34;failed is reachable from any non-terminal state and stores the message&#34;, () =&gt; {
+  const db = dbWithJob();
+  transition(db, 1, &#34;resolving&#34;);
+  transition(db, 1, &#34;failed&#34;, &#34;all Tavily queries failed&#34;);
+  const row = db.prepare(&#34;SELECT status, error FROM jobs WHERE id = 1&#34;).get() as {
+    status: string;
+    error: string;
+  };
+  assert.equal(row.status, &#34;failed&#34;);
+  assert.equal(row.error, &#34;all Tavily queries failed&#34;);
+});
+
+test(&#34;terminal states accept no further transitions&#34;, () =&gt; {
+  const db = dbWithJob();
+  for (const s of [&#34;resolving&#34;, &#34;searching&#34;, &#34;filtering&#34;, &#34;classifying&#34;, &#34;done&#34;]) {
+    transition(db, 1, s);
+  }
+  assert.throws(() =&gt; transition(db, 1, &#34;failed&#34;), /illegal transition/);
+});
+
+test(&#34;addWarning appends to the job&#39;s warning list&#34;, () =&gt; {
+  const db = dbWithJob();
+  addWarning(db, 1, &#34;14/18 queries succeeded&#34;);
+  const row = db.prepare(&#34;SELECT message FROM warnings WHERE job_id = 1&#34;).get() as {
+    message: string;
+  };
+  assert.equal(row.message, &#34;14/18 queries succeeded&#34;);
+});
+
+test(&#34;queue runs jobs FIFO, one at a time, and survives a throwing runner&#34;, async () =&gt; {
+  const events: string[] = [];
+  let release: () =&gt; void = () =&gt; {};
+  const queue = createQueue(async (id) =&gt; {
+    events.push(`start ${id}`);
+    if (id === 1) await new Promise&lt;void&gt;((r) =&gt; { release = r; });
+    if (id === 2) throw new Error(&#34;boom&#34;);
+    events.push(`end ${id}`);
+  });
+  queue.enqueue(1);
+  queue.enqueue(2);
+  queue.enqueue(3);
+  await new Promise((r) =&gt; setTimeout(r, 10));
+  assert.deepEqual(events, [&#34;start 1&#34;]); // 2 and 3 wait behind 1
+  release();
+  await new Promise((r) =&gt; setTimeout(r, 10));
+  assert.deepEqual(events, [&#34;start 1&#34;, &#34;end 1&#34;, &#34;start 2&#34;, &#34;start 3&#34;, &#34;end 3&#34;]);
+});
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run: `pnpm test`
+Expected: FAIL — `Cannot find module &#39;./queue.ts&#39;`
+
+- [ ] **Step 3: Write `src/jobs/queue.ts`**
+
+```ts
+// src/jobs/queue.ts
+import type { DatabaseSync } from &#34;node:sqlite&#34;;
+
+export const TERMINAL_STATES = [&#34;done&#34;, &#34;failed&#34;, &#34;done_with_warnings&#34;];
+
+// Legal forward edges. `failed` is reachable from every non-terminal state.
+const LEGAL: Record&lt;string, string[]&gt; = {
+  pending: [&#34;resolving&#34;, &#34;failed&#34;],
+  resolving: [&#34;searching&#34;, &#34;failed&#34;],
+  searching: [&#34;filtering&#34;, &#34;failed&#34;],
+  filtering: [&#34;classifying&#34;, &#34;failed&#34;],
+  classifying: [&#34;done&#34;, &#34;done_with_warnings&#34;, &#34;failed&#34;],
+};
+
+export function transition(
+  db: DatabaseSync,
+  jobId: number,
+  toState: string,
+  message?: string,
+): void {
+  const row = db.prepare(&#34;SELECT status FROM jobs WHERE id = ?&#34;).get(jobId) as
+    | { status: string }
+    | undefined;
+  if (!row) throw new Error(`job ${jobId} not found`);
+  if (!LEGAL[row.status]?.includes(toState)) {
+    throw new Error(`illegal transition ${row.status} → ${toState} (job ${jobId})`);
+  }
+  if (toState === &#34;failed&#34;) {
+    db.prepare(&#34;UPDATE jobs SET status = &#39;failed&#39;, error = ? WHERE id = ?&#34;).run(
+      message ?? &#34;unknown error&#34;,
+      jobId,
+    );
+  } else {
+    db.prepare(&#34;UPDATE jobs SET status = ? WHERE id = ?&#34;).run(toState, jobId);
+  }
+}
+
+export function addWarning(db: DatabaseSync, jobId: number, message: string): void {
+  db.prepare(&#34;INSERT INTO warnings (job_id, message) VALUES (?, ?)&#34;).run(jobId, message);
+}
+
+// Tiny in-process FIFO, concurrency 1. The runner is injected (the pipeline
+// registers itself in main.ts) so this module stays dependency-free and testable.
+export function createQueue(run: (jobId: number) =&gt; Promise&lt;void&gt;) {
+  const waiting: number[] = [];
+  let draining = false;
+
+  async function drain(): Promise&lt;void&gt; {
+    if (draining) return;
+    draining = true;
+    while (waiting.length &gt; 0) {
+      const id = waiting.shift() as number;
+      try {
+        await run(id);
+      } catch (err) {
+        // The pipeline marks its own job failed; this is the backstop that
+        // keeps one bad job from killing the queue.
+        console.error(`job ${id} runner threw:`, err);
+      }
+    }
+    draining = false;
+  }
+
+  return {
+    enqueue(jobId: number): void {
+      waiting.push(jobId);
+      void drain();
+    },
+  };
+}
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run: `pnpm test`
+Expected: PASS (all tests so far)
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/jobs/queue.ts src/jobs/queue.test.ts
+git commit -m &#34;feat: job state machine + in-process FIFO queue&#34;
+```
+PLAN_EOF</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message user" id="msg-2026-06-03T10-29-43-708Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-06-03T10-29-43-708Z" class="timestamp-link"><time datetime="2026-06-03T10:29:43.708Z" data-timestamp="2026-06-03T10:29:43.708Z">2026-06-03T10:29:43.708Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>[This command modified 1 file you&#x27;ve previously read: docs/2-plan.md. Call Read before editing.]</pre></div><button class="expand-btn">Show more</button></div></div>
+<div class="assistant-text"><p>write the plan. Do not write code yet.</p></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-30-03-097Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-30-03-097Z" class="timestamp-link"><time datetime="2026-06-03T10:30:03.097Z" data-timestamp="2026-06-03T10:30:03.097Z">2026-06-03T10:30:03.097Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-30-04-099Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-30-04-099Z" class="timestamp-link"><time datetime="2026-06-03T10:30:04.099Z" data-timestamp="2026-06-03T10:30:04.099Z">2026-06-03T10:30:04.099Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01RAAWJkRCjfwCZ7Cu1yTkw7"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/Users/kerihenare/Work/Drumbeat/breakbeat/main/docs/2-plan.md&#34;,
+  &#34;offset&#34;: 230,
+  &#34;limit&#34;: 80
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-06-03T10-30-04-231Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-06-03T10-30-04-231Z" class="timestamp-link"><time datetime="2026-06-03T10:30:04.231Z" data-timestamp="2026-06-03T10:30:04.231Z">2026-06-03T10:30:04.231Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>230	cp node_modules/htmx.org/dist/htmx.min.js public/htmx.min.js
+231	```
+232	
+233	- [ ] **Step 3: Ensure `data/` is gitignored and `public/htmx.min.js` is not**
+234	
+235	Check `.gitignore` contains a `data/` line (add if missing). Verify with:
+236	
+237	```bash
+238	git check-ignore data/ &amp;&amp; git check-ignore public/htmx.min.js; echo &quot;exit $? (htmx must NOT be ignored)&quot;
+239	```
+240	
+241	Expected: `data/` prints (ignored); the htmx check exits non-zero (not ignored).
+242	
+243	- [ ] **Step 4: Commit**
+244	
+245	```bash
+246	git add package.json pnpm-lock.yaml public/htmx.min.js .gitignore
+247	git commit -m &quot;chore: add runtime deps, vendor htmx&quot;
+248	```
+249	
+250	### Task 2: Database schema (`db.ts`)
+251	
+252	**Files:**
+253	- Create: `src/db.ts`
+254	- Test: `src/db.test.ts`
+255	
+256	- [ ] **Step 1: Write the failing tests**
+257	
+258	```ts
+259	// src/db.test.ts
+260	import assert from &quot;node:assert/strict&quot;;
+261	import { test } from &quot;node:test&quot;;
+262	import { createDb } from &quot;./db.ts&quot;;
+263	
+264	function seedJob(db: ReturnType&lt;typeof createDb&gt;): number {
+265	  db.prepare(&quot;INSERT INTO companies (name) VALUES (&#x27;Acme&#x27;)&quot;).run();
+266	  const { lastInsertRowid } = db
+267	    .prepare(&quot;INSERT INTO jobs (company_id) VALUES (1)&quot;)
+268	    .run();
+269	  return Number(lastInsertRowid);
+270	}
+271	
+272	test(&quot;results are born included&quot;, () =&gt; {
+273	  const db = createDb(&quot;:memory:&quot;);
+274	  const jobId = seedJob(db);
+275	  db.prepare(
+276	    &quot;INSERT INTO results (job_id, url, normalized_url, title, source_domain) VALUES (?, &#x27;https://a.com/x&#x27;, &#x27;a.com/x&#x27;, &#x27;A story&#x27;, &#x27;a.com&#x27;)&quot;,
+277	  ).run(jobId);
+278	  const row = db.prepare(&quot;SELECT status FROM results WHERE id = 1&quot;).get() as {
+279	    status: string;
+280	  };
+281	  assert.equal(row.status, &quot;included&quot;);
+282	});
+283	
+284	test(&quot;normalized_url is unique per job, not globally&quot;, () =&gt; {
+285	  const db = createDb(&quot;:memory:&quot;);
+286	  const jobId = seedJob(db);
+287	  const insert = db.prepare(
+288	    &quot;INSERT INTO results (job_id, url, normalized_url, title, source_domain) VALUES (?, &#x27;https://a.com/x&#x27;, &#x27;a.com/x&#x27;, &#x27;A story&#x27;, &#x27;a.com&#x27;)&quot;,
+289	  );
+290	  insert.run(jobId);
+291	  assert.throws(() =&gt; insert.run(jobId), /UNIQUE/);
+292	  const { lastInsertRowid } = db
+293	    .prepare(&quot;INSERT INTO jobs (company_id) VALUES (1)&quot;)
+294	    .run();
+295	  insert.run(Number(lastInsertRowid)); // same URL, different job: fine
+296	});
+297	
+298	test(&quot;exclusion_code is a closed set&quot;, () =&gt; {
+299	  const db = createDb(&quot;:memory:&quot;);
+300	  const jobId = seedJob(db);
+301	  assert.throws(
+302	    () =&gt;
+303	      db
+304	        .prepare(
+305	          &quot;INSERT INTO results (job_id, url, normalized_url, title, source_domain, status, exclusion_code) VALUES (?, &#x27;u&#x27;, &#x27;n&#x27;, &#x27;t&#x27;, &#x27;d&#x27;, &#x27;excluded&#x27;, &#x27;spam&#x27;)&quot;,
+306	        )
+307	        .run(jobId),
+308	    /CHECK/,
+309	  );</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-30-14-240Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-30-14-240Z" class="timestamp-link"><time datetime="2026-06-03T10:30:14.240Z" data-timestamp="2026-06-03T10:30:14.240Z">2026-06-03T10:30:14.240Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-30-14-273Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-30-14-273Z" class="timestamp-link"><time datetime="2026-06-03T10:30:14.273Z" data-timestamp="2026-06-03T10:30:14.273Z">2026-06-03T10:30:14.273Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-32-27-218Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-32-27-218Z" class="timestamp-link"><time datetime="2026-06-03T10:32:27.218Z" data-timestamp="2026-06-03T10:32:27.218Z">2026-06-03T10:32:27.218Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01UtoGZWmx8BNeLWWEe7tfBC">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">2-plan.md</span></div>
+<div class="file-tool-fullpath">/Users/kerihenare/Work/Drumbeat/breakbeat/main/docs/2-plan.md</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content"># Breakbeat Implementation Plan
+
+&gt; **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** A local-only Express web app that runs a background Job pipeline (Resolve → Search → Filter → Classify) finding third-party content about a company from the last 36 months, presented as a reviewable, deduplicated list.
+
+**Architecture:** Single Node.js v26 process: Express + Nunjucks (autoescape) serve HTML; HTMX load-polling re-renders a job fragment every 2s; an in-process FIFO queue (concurrency 1) drives a job state machine persisted in SQLite (`node:sqlite`). Retrieval is ~18 parallel Tavily queries; filtering is deterministic heuristics + title Collapse, then one batched Claude Haiku classification pass with structured outputs. Source of truth for all behaviour: `docs/1-spec.md`; domain language: `CONTEXT.md` (Job, Result, Exclusion, Collapse, Own Channel, Warning — use these terms exactly in code, comments, and tests).
+
+**Tech Stack:** Node v26 native TS (erasable syntax only — no `enum`/`namespace`/ctor param properties), Express, Nunjucks, HTMX (vendored), `node:sqlite`, `@tavily/core`, `@anthropic-ai/sdk`, Biome, pnpm, `node --test`.
+
+---
+
+## Design summary
+
+These sections condense `docs/1-spec.md` into the decisions the tasks below implement. Where this plan and the spec disagree, the spec wins.
+
+### Stack choice
+
+| Concern | Choice | Why |
+|---|---|---|
+| Runtime | Node.js v26, native type stripping | No build step; `.nvmrc` pins it. Erasable TS syntax only |
+| Web | Express + Nunjucks (`autoescape: true`) | Boring, conventional; escaping is the engine default, `\| safe` is the greppable opt-out |
+| Live status | HTMX load-polling (every 2s, `hx-swap=&#34;outerHTML&#34;`) | Stop-condition lives server-side in the template; no client JS state |
+| Persistence | SQLite via `node:sqlite`, WAL mode | Zero deps, zero setup; WAL lets the poll read while the pipeline writes |
+| Jobs | In-process async FIFO queue, concurrency 1 | Local-only brief; the job table + state machine is the portable interface |
+| Search | Tavily, `search_depth: &#34;advanced&#34;` everywhere | Classify sees only title+snippet, so snippet quality *is* classification quality |
+| Classification | One batched Claude Haiku pass, structured outputs | Heuristics handle the clear-cut 80%; LLM reserved for genuine ambiguity |
+| Env | `node --env-file-if-exists=.env` | No dotenv; keyless clone still boots to a friendly error |
+
+### App structure
+
+```
+src/
+  main.ts                    # Express bootstrap, Nunjucks config, env check, serves /public, mounts routes
+  db.ts                      # node:sqlite open + pragmas + CREATE TABLE IF NOT EXISTS (no migrations)
+  routes/jobs.ts             # GET / (list+form), POST / (create job, 303), GET /:id (page or fragment)
+  views/
+    layout.njk               # page chrome
+    index.njk                # jobs list + new-job form
+    job.njk                  # full job page (wraps the fragment)
+    _job.njk                 # the self-replacing HTMX fragment: status header + results
+  jobs/
+    queue.ts                 # FIFO queue + job state machine (transition())
+    queue.test.ts
+    pipeline.ts              # orchestrates Resolve → Search → Filter → Classify
+    resolve.ts               # identity resolution: homepage fetch (SSRF-guarded), handle scrape, cascade
+    resolve.test.ts
+  search/
+    tavily.ts                # @tavily/core client + the ~18-query strategy + insert-time URL dedup
+    tavily.test.ts           # query-strategy shape only (no API calls in tests)
+  filter/
+    normalize.ts             # normalizeUrl (dedup key) + normalizeTitle (Collapse key)
+    normalize.test.ts
+    heuristics.ts            # blocklists, exclusion rules, date window, Collapse
+    heuristics.test.ts
+    classify.ts              # batched Haiku structured-output calls + ID sanity layer
+public/
+  htmx.min.js                # vendored from node_modules, committed — no CDN
+data/                        # gitignored; breakbeat.db created at boot
+```
+
+API clients (`tavily.ts`, `classify.ts`, the fetch in `resolve.ts`) are deliberately untested per the spec; everything pure has co-located tests.
+
+### Data model
+
+Four tables, created idempotently at boot. No migrations (deliberate — `pnpm db:reset` deletes the file).
+
+```sql
+CREATE TABLE IF NOT EXISTS companies (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  name        TEXT NOT NULL,                  -- raw input, trimmed (display label)
+  url         TEXT,                           -- raw input URL as given
+  url_host    TEXT,                           -- normalized host — the identity key when present
+  created_at  TEXT NOT NULL DEFAULT (datetime(&#39;now&#39;))
+);
+
+CREATE TABLE IF NOT EXISTS jobs (
+  id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+  company_id             INTEGER NOT NULL REFERENCES companies(id),
+  status                 TEXT NOT NULL DEFAULT &#39;pending&#39; CHECK (status IN
+    (&#39;pending&#39;,&#39;resolving&#39;,&#39;searching&#39;,&#39;filtering&#39;,&#39;classifying&#39;,
+     &#39;done&#39;,&#39;failed&#39;,&#39;done_with_warnings&#39;)),
+  window_start           TEXT,                -- date-only UTC; computed ONCE at Resolve
+  window_end             TEXT,
+  resolved_name          TEXT,
+  resolved_domains       TEXT NOT NULL DEFAULT &#39;[]&#39;,  -- JSON array of hosts
+  resolved_handles       TEXT NOT NULL DEFAULT &#39;[]&#39;,  -- JSON array of profile-URL prefixes
+  resolution_provenance  TEXT CHECK (resolution_provenance IN
+    (&#39;url_provided&#39;,&#39;heuristic&#39;,&#39;llm&#39;,&#39;none&#39;)),
+  error                  TEXT,                -- human-readable; set when status = failed
+  created_at             TEXT NOT NULL DEFAULT (datetime(&#39;now&#39;))
+);
+
+CREATE TABLE IF NOT EXISTS warnings (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  job_id     INTEGER NOT NULL REFERENCES jobs(id),
+  message    TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime(&#39;now&#39;))
+);
+
+CREATE TABLE IF NOT EXISTS results (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  job_id           INTEGER NOT NULL REFERENCES jobs(id),
+  url              TEXT NOT NULL,             -- original URL; what the UI links to
+  normalized_url   TEXT NOT NULL,             -- the dedup key (rules in filter/normalize.ts)
+  title            TEXT NOT NULL,
+  snippet          TEXT,
+  source_domain    TEXT NOT NULL,
+  published_date   TEXT,                      -- nullable → &#34;date unknown&#34; badge
+  status           TEXT NOT NULL DEFAULT &#39;included&#39; CHECK (status IN (&#39;included&#39;,&#39;excluded&#39;)),
+  exclusion_code   TEXT CHECK (exclusion_code IN
+    (&#39;own_channel&#39;,&#39;aggregator&#39;,&#39;ecommerce_review&#39;,&#39;out_of_window&#39;,&#39;duplicate&#39;,&#39;llm_excluded&#39;)),
+  exclusion_detail TEXT,                      -- &#34;of #42&#34;, &#34;LLM&#34;, …
+  content_type     TEXT CHECK (content_type IN
+    (&#39;news&#39;,&#39;trade_publication&#39;,&#39;blog_post&#39;,&#39;press_release&#39;,
+     &#39;social_post&#39;,&#39;newsletter&#39;,&#39;podcast&#39;,&#39;other&#39;)),  -- nullable: unclassified ≠ other
+  confidence       TEXT CHECK (confidence IN (&#39;high&#39;,&#39;low&#39;)),
+  created_at       TEXT NOT NULL DEFAULT (datetime(&#39;now&#39;)),
+  UNIQUE (job_id, normalized_url)             -- exact-URL dedup IS this constraint
+);
+```
+
+Key invariants (from CONTEXT.md): Results are born `included`; Exclusion is the only transition and is soft (never a delete); `content_type` stays NULL on classify failure (never defaulted to `other`); the 36-month window is computed once at Resolve and read everywhere else.
+
+### Background job approach
+
+- `POST /` inserts a `pending` job row and enqueues its id; an in-process FIFO (concurrency 1) runs the pipeline one job at a time. The jobs list makes the queue visible (a `pending` job behind a running one).
+- The state machine `pending → resolving → searching → filtering → classifying → done | failed | done_with_warnings` lives in `jobs/queue.ts` as a general `transition(jobId, toState, message?)` that validates legal transitions and writes the row — the shape the spec wants so the future boot-sweep and cancel button slot in without pipeline changes.
+- The queue takes the pipeline runner by injection (registered in `main.ts`) so `queue.ts` stays dependency-free and testable; a throwing runner never kills the queue.
+- Uncaught pipeline error → `transition(id, &#39;failed&#39;, message)`. Terminal state is `done_with_warnings` iff the job&#39;s warning list is non-empty.
+- Known, accepted gap (spec §5): a job mid-flight at process exit stays in its running state forever. Named in the write-up, not fixed.
+
+### Search / retrieval strategy
+
+~18 Tavily queries per job, all `search_depth: &#34;advanced&#34;`, `max_results: 20`, all with `exclude_domains` = own domains + aggregator blocklist, fired concurrently via `Promise.allSettled`:
+
+1. **Per content type (7)** — one query per brief category (&#34;X news&#34;, &#34;X press release&#34;, &#34;X podcast interview&#34;, …), 36-month window.
+2. **Time-sliced (6)** — news and press releases only, one query per 12-month `start_date`/`end_date` slice; counters recency bias where dates are reliable. Never applied to dateless types.
+3. **Angle queries (5)** — &#34;X funding&#34;, &#34;X acquisition&#34;, &#34;X leadership interview&#34;, &#34;X partnership&#34;, &#34;X lawsuit OR controversy&#34;. Overlap is absorbed by URL dedup.
+
+Tavily params: news-ish queries (type-queries for news/press release + all six slices) use `topic: &#34;news&#34;` (reliable `published_date`, real `start_date`/`end_date`); everything else `topic: &#34;general&#34;` + `time_range: &#34;3y&#34;` best-effort. Per-job caps (named constants, one place): max 20 queries, 20 results each, classify cap 400 in chunks of 50.
+
+### Result filtering rules
+
+Funnel order (cheap → expensive), all via soft Exclusion with a closed code set:
+
+1. **Insert-time URL dedup** — the `UNIQUE(job_id, normalized_url)` constraint; not a stage.
+2. **Heuristics** (`filter/heuristics.ts`): own domains/subdomains and own social-profile URL prefixes → `own_channel`; aggregator blocklist (`news.ycombinator.com`, `reddit.com`, `slashdot.org`, `lobste.rs`, `digg.com`, `flipboard.com`, `feedly.com`, `news.google.com`, `apple.news` — Medium deliberately NOT listed) → `aggregator`; review domains (`g2.com`, `capterra.com`, `trustpilot.com`, `trustradius.com`, `getapp.com`, `softwareadvice.com`, `producthunt.com`), ecommerce path segments (`/product/`, `/products/`, `/shop/`, `/store/`, `/buy/`, `/pricing/`, `/vs/`, `/compare/`, `/alternatives/`), and anchored title regexes (`^best .* (alternatives|tools|software)`, `(review|comparison) of`, `^top \d+`) → `ecommerce_review` (`vs` is a path pattern only, never a title match); published date before `window_start` → `out_of_window`. **Dateless Results are kept and flagged**, never Excluded.
+3. **Collapse** (tail of Filter, still-`included` Results only): group by normalized title (≥25 chars after normalization); winner = earliest published date, falling back to first-seen; losers → `duplicate`, detail &#34;of #N&#34;. Only collapse when published dates are ≤14 days apart (or unknown).
+4. **Classify backstop** (Haiku): catches what heuristics can&#39;t see — Own Channels missed by the scrape, title-`vs` comparisons, judgement-call review pages. Writes the same exclusion-code vocabulary, `exclusion_detail = &#39;LLM&#39;`.
+
+### Deduplication strategy
+
+Two distinct mechanisms, two pinned normalizations (`filter/normalize.ts`):
+
+- **normalizeUrl** (exact-URL dedup key, per job): lowercase host, strip `www.`, drop scheme, strip fragment, strip only known tracking params (`utm_*`, `fbclid`, `gclid`, `mc_cid`, `ref`, `source`) keeping everything else, sort remaining params, strip trailing slash, preserve path case.
+- **normalizeTitle** (Collapse key): NFKC → outlet-suffix strip (trailing ` | X` / ` – X` / ` - X`, final separator only, remainder ≥25 chars and segment ≤40) → lowercase → strip punctuation → collapse whitespace → exact match.
+
+### Status lifecycle
+
+`pending → resolving → searching → filtering → classifying → done | failed | done_with_warnings`
+
+Every stage transition updates the job row; the HTMX fragment re-renders it every 2s with per-stage counters (&#34;47 fetched · 12 excluded · 31 classified&#34; — one `GROUP BY`). When the job reaches a terminal state the server renders the fragment *without* polling attributes and polling stops naturally.
+
+### Error handling
+
+**Degraded-stage principle:** partial completion → Warning row + continue; total stage failure → job `failed` with a human-readable message in the UI.
+
+| Event | Outcome |
+|---|---|
+| Some Tavily queries fail | Warning &#34;14/18 queries succeeded&#34; |
+| All Tavily queries fail | Job `failed` |
+| No homepage resolved (name-only) | Warning; proceed degraded — zero domains/handles, Classify carries own-channel alone |
+| LLM-assisted resolution | Warning &#34;homepage identified with low confidence — verify&#34; |
+| Classify call errors | Warning; affected Results shown unclassified (`content_type` NULL) |
+| Homepage fetch hangs/oversized | 5s timeout / 1MB cap → treated as unresolved (degraded path) |
+| Missing API key at boot | Friendly named-key message + clean exit, not a stack trace |
+
+### Setup instructions (what the README must say)
+
+```bash
+nvm use                       # Node v26 (.nvmrc)
+pnpm install
+cp .env.example .env          # then set ANTHROPIC_API_KEY + TAVILY_API_KEY
+pnpm dev                      # http://localhost:3000
+pnpm test                     # unit tests, no network
+pnpm db:reset                 # fresh demo
+```
+
+### Risks and trade-offs
+
+| Risk / trade-off | Mitigation / acceptance |
+|---|---|
+| Tavily SDK params drift from spec assumptions | Verify against the SDK at integration time (Task 9); params are named constants in one file |
+| Anthropic structured-outputs flag unavailable in SDK | Fallback pinned in spec: prompt-requested JSON + parse + validate + one retry |
+| Wrong company resolved (name-only input) | Provenance surfaced in status line + low-confidence Warning; per-job caps bound the damage; form hints &#34;provide the URL&#34; |
+| Prompt injection via hostile snippets | Structured outputs, closed enums, no free-text echo field, no tool use; worst case = self-misclassification, visible via soft Exclusion |
+| SSRF via the one homepage fetch | Private/loopback/link-local IP rejection, redirect cap 3 re-checking each hop, 5s/1MB caps, `https?:` only; DNS-rebinding named-and-skipped |
+| Process restart orphans a running job | Accepted (spec §5); boot-time sweep is the named next step |
+| Cost: ~36 Tavily credits + ~4–6 Haiku calls per job | ≈27 free-tier jobs/month; caps are constants, downgrade is one line |
+| Recency bias in search ranking | Time-sliced news/PR queries; an early cut under time pressure |
+| FIFO-1 queue: slow job blocks the queue | Visible in jobs list as `pending`; liveness guards (timeouts) bound each stage |
+
+**If time runs short, cut in spec §4 order:** social handle scraping → time-sliced queries → Resolve LLM fallback → per-hop redirect re-checking (set cap to 0) → slice-5 polish.
+
+---
+
+## Tasks
+
+Tracer-bullet ordering (spec §4): after Task 6 the whole loop works end-to-end with a fake pipeline; every later task upgrades one stage. Conventions for all tasks: TDD (failing test → minimal implementation → green → commit); local imports use explicit `.ts` extensions (Node type stripping requires them); tests are co-located, use `node:test` + `node:assert/strict`, never touch the network, and use `createDb(&#34;:memory:&#34;)` when they need a DB; run `pnpm lint:fix` before every commit; erasable TS syntax only.
+
+### Slice 1 — skeleton: UI shows status end-to-end with a fake pipeline
+
+#### Task 1: Dependencies, vendored HTMX, gitignore
+
+**Files:** modify `package.json` (via pnpm), create `public/htmx.min.js`, verify `.gitignore`.
+
+- [ ] `pnpm add express nunjucks @tavily/core @anthropic-ai/sdk htmx.org` and `pnpm add -D @types/express @types/nunjucks`
+- [ ] Copy `node_modules/htmx.org/dist/htmx.min.js` → `public/htmx.min.js` and commit it (no CDN; clone → run stays self-contained)
+- [ ] Verify `data/` is gitignored and `public/htmx.min.js` is not (`git check-ignore`)
+- [ ] Commit: `chore: add runtime deps, vendor htmx`
+
+#### Task 2: Database schema (`src/db.ts`)
+
+**Files:** create `src/db.ts`, `src/db.test.ts`.
+
+- [ ] Write failing tests covering: a Result is born `included`; `normalized_url` is unique per job but the same URL may exist across jobs; `exclusion_code`/`status`/`content_type` CHECK constraints reject values outside the closed sets; a new job starts `pending`
+- [ ] Implement: `createDb(path)` factory (opens DB, sets `journal_mode = WAL` + `foreign_keys = ON`, runs the idempotent schema from the Data model section) and a lazy `getDb()` singleton that creates `data/` and opens `data/breakbeat.db`. The factory exists so tests run against `&#34;:memory:&#34;`
+- [ ] `pnpm test` green
+- [ ] Commit: `feat: sqlite schema — jobs, results (soft exclusion), warnings`
+
+#### Task 3: Job state machine + FIFO queue (`src/jobs/queue.ts`)
+
+**Files:** create `src/jobs/queue.ts`, `src/jobs/queue.test.ts`.
+
+- [ ] Write failing tests covering: legal transitions walk the full pipeline; illegal jumps throw and leave status untouched; `failed` is reachable from every non-terminal state and stores the human-readable message on the job row; terminal states accept no further transitions; `addWarning` appends to the job&#39;s warning list; the queue runs jobs strictly FIFO with concurrency 1 (job 2 waits for job 1); a throwing runner doesn&#39;t kill the queue (job 3 still runs)
+- [ ] Implement: `transition(db, jobId, toState, message?)` validating against a legal-edges table; `addWarning(db, jobId, message)`; `TERMINAL_STATES` constant; `createQueue(run)` returning `{ enqueue(jobId) }` — runner injected so the module stays dependency-free
+- [ ] `pnpm test` green
+- [ ] Commit: `feat: job state machine + in-process FIFO queue`
+
+#### Task 4: Fake pipeline (`src/jobs/pipeline.ts`)
+
+**Files:** create `src/jobs/pipeline.ts` (stub version — no test; it&#39;s throwaway scaffolding replaced by Tasks 10/13/15).
+
+- [ ] Implement `runPipeline(db, jobId)`: walk all four stage transitions with a ~1.5s `setTimeout` between each; the fake Search stage inserts ~8 hard-coded Results (varied domains/titles/dates, two sharing a normalized URL to show the unique constraint firing); the fake Filter stage Excludes one as `aggregator`; finish via a shared `finalize` helper: `done_with_warnings` iff warnings exist, else `done`. Wrap the whole run in try/catch → `transition(…, &#39;failed&#39;, message)`
+- [ ] Commit: `feat: fake pipeline walks the state machine with stub data`
+
+#### Task 5: Routes + views
+
+**Files:** create `src/routes/jobs.ts`, `src/views/layout.njk`, `src/views/index.njk`, `src/views/job.njk`, `src/views/_job.njk`.
+
+- [ ] `GET /` — jobs list (company, status, included-result count, started-at; one query with a `LEFT JOIN`/subselect) + the new-job form (name and/or URL, hint text &#34;provide the URL for unambiguous results&#34;)
+- [ ] `POST /` — validate (name: non-empty after trim, length cap ~200; URL: `URL` parse + `https?:` scheme; at least one of the two present; on invalid → re-render form with message). Find-or-create the company on the identity key `(lowercase-trimmed name, normalized URL host)`; URL wins on conflict per spec §1.2. Insert `pending` job, enqueue, `303` redirect to `/:id` (PRG)
+- [ ] `GET /:id` — one route, two render depths: full page normally; just the `_job.njk` fragment when the `HX-Request` header is present. 404 for unknown ids
+- [ ] `_job.njk` — the self-replacing container: `hx-get=&#34;/:id&#34; hx-trigger=&#34;every 2s&#34; hx-swap=&#34;outerHTML&#34;` **only when status is non-terminal** (the stop-condition lives in this template); status header (state, resolved-identity line + provenance, window line, warnings, per-stage counters from one `GROUP BY`); results list grouped in fixed section order (News → Trade publications → Press releases → Podcasts → Blog posts → Newsletters → Social posts → Other → Unclassified), date-desc within sections, date-unknown rows sinking with a badge; collapsed `&lt;details&gt;` excluded section at the bottom grouped by `exclusion_code` with counts and per-row `exclusion_detail`. Rows: title, source domain, date, snippet, confidence badge, link to the **original** URL. Autoescape everywhere; zero `| safe` unless deliberate and greppable
+- [ ] Commit: `feat: routes + views — jobs list, PRG create, HTMX polling fragment`
+
+#### Task 6: Bootstrap (`src/main.ts`) + end-to-end check
+
+**Files:** modify `src/main.ts`.
+
+- [ ] Boot-time env check: name any missing key (`ANTHROPIC_API_KEY`, `TAVILY_API_KEY`) in a friendly message and exit cleanly — no stack trace
+- [ ] Express bootstrap: Nunjucks with `autoescape: true`, serve `/public` static, `express.urlencoded`, mount routes, wire `createQueue(runPipeline)` and pass the enqueue handle to the routes, listen on 3000
+- [ ] Manual verification (the slice-1 demo): `pnpm dev`, create a job, watch it walk `pending → … → done` with the stub Results appearing, polling stopping at terminal state, refresh-safe job page, second job queuing visibly behind the first
+- [ ] Commit: `feat: express bootstrap — slice 1 end-to-end with fake pipeline`
+
+### Slice 2 — real Resolve + Search
+
+#### Task 7: Normalization (`src/filter/normalize.ts`)
+
+**Files:** create `src/filter/normalize.ts`, `src/filter/normalize.test.ts`.
+
+- [ ] Write failing tests straight from the spec&#39;s pinned rules: `http`/`https`/`www.` copies collapse; fragment stripped; `utm_*`/`fbclid`/`gclid`/`mc_cid`/`ref`/`source` stripped while `?v=`/`?id=` survive; param order never defeats dedup; trailing slash stripped; path case preserved; `normalizeTitle` adversarial cases — the TechCrunch/Yahoo syndication pair collapses to one key, `Acme - The Real Story` survives intact (remainder &lt; 25 chars), a long-subtitle strip is refused (segment &gt; 40 chars), NFKC + punctuation + whitespace folding
+- [ ] Implement `normalizeUrl(raw)` and `normalizeTitle(raw)` exactly per the Deduplication strategy section (suffix strip runs before punctuation stripping, final separator only)
+- [ ] `pnpm test` green; commit: `feat: pinned URL + title normalization (the dedup policy)`
+
+#### Task 8: Resolve stage (`src/jobs/resolve.ts`)
+
+**Files:** create `src/jobs/resolve.ts`, `src/jobs/resolve.test.ts`.
+
+- [ ] Write failing tests for the pure parts only: 36-month window computation (date-only UTC, calendar months — assert the spec&#39;s own example: created 2026-06-03 → window 2023-06-03 → 2026-06-03); the homepage-pick heuristic over a fixed fake top-5 (first result passing both guards wins; never-a-homepage blocklist rejects; name-token matching handles `acme` ⊆ `getacme.io` / &#34;Acme, Inc.&#34;; no candidate → `none`); social-handle extraction regexes over sample HTML (LinkedIn company URL, X/Twitter handle); SSRF guard predicate rejects private/loopback/link-local IPs
+- [ ] Implement: window computation stored on the job row; SSRF-guarded homepage fetch (resolve hostname via `node:dns`, reject private ranges, redirect cap 3 re-checking each hop&#39;s host, 5s timeout via `AbortSignal.timeout`, 1MB read cap, `https?:` only); best-effort title/metadata + social-handle scrape (raw HTML regex); the resolution cascade — URL provided → `url_provided`; else heuristic over top-5 Tavily results → `heuristic`; else Haiku fallback constrained to `candidate_index: 0–4 | none` over the same closed list → `llm` + Warning &#34;homepage identified with low confidence — verify&#34;; else `none` + Warning &#34;no homepage identified — own-channel exclusion is LLM-only&#34;. Persist resolved name/domains/handles/provenance on the job
+- [ ] `pnpm test` green; commit: `feat: resolve stage — window, SSRF-guarded fetch, identity cascade`
+
+#### Task 9: Tavily client + query strategy (`src/search/tavily.ts`)
+
+**Files:** create `src/search/tavily.ts`, `src/search/tavily.test.ts`.
+
+- [ ] Write failing tests for `buildQueries(identity, windowStart, windowEnd)` (pure): exactly 18 queries; 7 type + 6 slice + 5 angle; news/PR type-queries and all slices carry `topic: &#34;news&#34;` + date bounds; the three 12-month slices tile the window exactly; dateless types carry `topic: &#34;general&#34;` + `time_range: &#34;3y&#34;` and are never sliced; every query carries `exclude_domains` = own domains + aggregator blocklist; total ≤ the `MAX_QUERIES = 20` cap
+- [ ] Implement `buildQueries` + `runSearch(db, job, identity)`: fire all queries via `Promise.allSettled` with `searchDepth: &#34;advanced&#34;`, `maxResults: 20`; insert each hit with `INSERT OR IGNORE` (the unique constraint is the dedup); store original URL, normalized URL, title, snippet, source domain, published date (nullable). Failed queries → one Warning &#34;N/18 queries succeeded&#34;; all failed → throw (stage failure → job `failed`). Verify actual `@tavily/core` parameter names against the installed SDK here — this is the pinned integration-check point
+- [ ] `pnpm test` green; commit: `feat: tavily query strategy + insert-time URL dedup`
+
+#### Task 10: Wire Resolve + Search into the pipeline
+
+**Files:** modify `src/jobs/pipeline.ts`.
+
+- [ ] Replace the fake Resolve and Search stages with the real ones (Filter/Classify still stubs); keep the try/catch → `failed` envelope and the `finalize` helper
+- [ ] Manual verification: run a job for a real company (e.g. name + URL); real Results stream into the list mid-job; warnings render if any query fails
+- [ ] Commit: `feat: pipeline runs real resolve + search`
+
+### Slice 3 — heuristic Filter + Collapse
+
+#### Task 11: Heuristic exclusion rules (`src/filter/heuristics.ts`)
+
+**Files:** create `src/filter/heuristics.ts`, `src/filter/heuristics.test.ts`.
+
+- [ ] Write failing tests asserting **codes, not strings** (spec §1): own domain + subdomain → `own_channel`; own social-profile URL prefix (`linkedin.com/company/x`, `x.com/&lt;handle&gt;`) → `own_channel` while a third-party post on the same platform passes; aggregator domains → `aggregator` (and Medium passes); review domains, ecommerce path segments, anchored title regexes → `ecommerce_review`; &#34;Top 10 fintech stories&#34; mid-title passes (anchored `^top \d+`); &#34;Acme vs the regulators&#34; title passes (`vs` is path-only); date before window → `out_of_window`; dateless → kept, no exclusion
+- [ ] Implement the blocklists as named exported constants and a pure `heuristicExclusion(result, identity, windowStart) → {code, detail} | null`; plus the impure `applyHeuristics(db, jobId, identity)` that walks included Results and writes Exclusions
+- [ ] `pnpm test` green; commit: `feat: heuristic exclusion rules — closed codes, pinned blocklists`
+
+#### Task 12: Collapse
+
+**Files:** modify `src/filter/heuristics.ts` + tests.
+
+- [ ] Write failing tests: syndicated pair (same normalized title, dates 3 days apart) collapses — earliest date wins, loser gets `duplicate` + detail `of #&lt;winner id&gt;`; short titles (&lt; 25 chars normalized) never collapse; same title 18 months apart does NOT collapse (two stories); unknown dates fall back to first-seen and may collapse; an already-Excluded copy never competes or wins (Collapse pool is `included` only); boundary-straddling pair at 14 days still collapses
+- [ ] Implement `collapse(db, jobId)` as a pure grouping over still-included rows + Exclusion writes, running at the tail of the Filter stage
+- [ ] `pnpm test` green; commit: `feat: title collapse — earliest-published wins, guards pinned`
+
+#### Task 13: Wire Filter into the pipeline
+
+**Files:** modify `src/jobs/pipeline.ts`.
+
+- [ ] Replace the fake Filter stage with `applyHeuristics` then `collapse`; manual verification: excluded section populates grouped by code, duplicates point at their winners
+- [ ] Commit: `feat: pipeline runs real heuristic filter + collapse`
+
+### Slice 4 — Classify
+
+#### Task 14: Haiku classification (`src/filter/classify.ts`)
+
+**Files:** create `src/filter/classify.ts`.
+
+- [ ] Implement per spec §1 Classify: batch surviving included Results in chunks of 50 (cap 400), fire chunks via `Promise.allSettled`; model pinned as named constant `claude-haiku-4-5`; prompt carries the Resolved Identity + the content-type tie-breakers verbatim from the spec (trade-pub vs news, newsletter = email-first/Substack, `other` = escape hatch never force-fit, own-channel = control not authorship, &#34;major&#34; social = surfaced by ranking); structured outputs (`output_format: json_schema`) with the per-result schema `{ id, content_type, exclude: none|own_channel|ecommerce_review|aggregator, confidence: high|low }` — no free-text reasoning field; sanity layer: returned IDs must match sent IDs, mismatches discarded with a Warning; SDK-unavailable fallback: prompt-requested JSON + parse + validate + one retry. Writers: `exclude ≠ none` → Exclusion with that code, detail `LLM`; else set `content_type` + `confidence`. Chunk failure → Warning, its Results stay unclassified (`content_type` NULL — never `other`)
+- [ ] No unit tests (API client, per spec) — but keep the prompt-builder and the ID-sanity check as exported pure functions so they *can* be tested if time allows
+- [ ] Commit: `feat: batched haiku classification — structured outputs, closed enums`
+
+#### Task 15: Wire Classify + finalize
+
+**Files:** modify `src/jobs/pipeline.ts`.
+
+- [ ] Replace the final stub; `finalize` already picks `done_with_warnings` iff warnings exist. Manual verification: full real job end-to-end — sections populate by content type, low-confidence badges render, Unclassified section appears only when a classify chunk failed
+- [ ] Commit: `feat: full pipeline live — resolve, search, filter, classify`
+
+### Slice 5 — polish
+
+#### Task 16: Status detail + type chips
+
+**Files:** modify `src/views/_job.njk`, `src/routes/jobs.ts`.
+
+- [ ] Per-stage counters in the status header (&#34;47 fetched · 12 excluded · 31 classified&#34; — one `GROUP BY` query); resolved-identity status line with provenance wording (&#34;Identified as: abc.xyz (LLM-assisted)&#34;); explicit window line (&#34;window: 2023-06-03 → 2026-06-03&#34;)
+- [ ] Type chip row toggling section visibility — plain `&lt;details&gt;`/checkbox CSS or a few lines of inline JS; visibility toggles only, no search box, no client templating. **First thing cut under time pressure**
+- [ ] Commit: `feat: status detail + type-chip filtering`
+
+### Slice 6 — deliverables
+
+#### Task 17: README + write-up + transcript
+
+**Files:** rewrite `README.md`, create `docs/3-writeup.md`, export agent transcript into `docs/`.
+
+- [ ] README: the Setup instructions section above, verbatim flow (clone → `nvm use` → `pnpm install` → copy `.env` → `pnpm dev`), plus a one-paragraph product description and a pointer to the docs
+- [ ] Write-up (`docs/3-writeup.md`): approach, trade-offs (lift from the Risks table + spec §2), explicit out-of-scope list (spec §5), next steps (boot-sweep, cancel button, confirmation gate, multi-provider, semantic dedup)
+- [ ] Export the agent transcript into the repo per the brief&#39;s deliverables
+- [ ] Final check: fresh-clone simulation — `git clean -xfd` a scratch copy (or re-clone), `pnpm install`, add keys, `pnpm dev`, run one job; `pnpm test` and `pnpm lint:fix` clean
+- [ ] Commit: `docs: README, write-up, transcript`
+
+---
+
+## Spec-coverage check
+
+| Spec section | Covered by |
+|---|---|
+| §1.1–1.2 Home page, PRG, identity key, URL-wins | Task 5 |
+| §1.3 Resolve (window, cascade, provenance, degraded path) | Task 8 |
+| §1.3 Search (18 queries, slices, angles, params) | Task 9 |
+| §1.3 Filter + Collapse | Tasks 11–12 |
+| §1.3 Classify (structured outputs, tie-breakers, injection stance) | Task 14 |
+| §1.3 Soft Exclusion vocabulary | Tasks 2, 11, 14 |
+| §1.4 One route two depths, server-side stop condition | Task 5 |
+| §1.5 Reviewable list (section order, badges, excluded details) | Tasks 5, 16 |
+| §3 Persistence, WAL, normalization, blocklists, state machine | Tasks 2, 3, 7, 11 |
+| §3 Security (env check, validation, autoescape, SSRF, caps) | Tasks 5, 6, 8, 9, 14 |
+| §3 Error handling (degraded-stage principle) | Tasks 3, 8, 9, 14, 15 |
+| §3 Testing (pure logic, codes-not-strings, adversarial titles) | Tasks 2, 3, 7, 8, 11, 12 |
+| §4 Slice order + cut list | Slice headers + Risks section |
+| §6 Deliverables | Task 17 |
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-06-03T10-32-27-487Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-06-03T10-32-27-487Z" class="timestamp-link"><time datetime="2026-06-03T10:32:27.487Z" data-timestamp="2026-06-03T10:32:27.487Z">2026-06-03T10:32:27.487Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /Users/kerihenare/Work/Drumbeat/breakbeat/main/docs/2-plan.md has been updated successfully. (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-32-42-472Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-32-42-472Z" class="timestamp-link"><time datetime="2026-06-03T10:32:42.472Z" data-timestamp="2026-06-03T10:32:42.472Z">2026-06-03T10:32:42.472Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-06-03T10-32-42-498Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-06-03T10-32-42-498Z" class="timestamp-link"><time datetime="2026-06-03T10:32:42.498Z" data-timestamp="2026-06-03T10:32:42.498Z">2026-06-03T10:32:42.498Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>The plan is written to <code>docs/2-plan.md</code> — design-level only, no implementation code, per your instruction.</p>
+<p><strong>Structure:</strong></p>
+<ol>
+<li>
+<p><strong>Design summary</strong> — the eleven sections you asked for (stack choice, app structure, data model with full SQL schema, background job approach, search/retrieval strategy, filtering rules, dedup strategy, status lifecycle, error handling, setup instructions, risks &amp; trade-offs), each condensed from <code>docs/1-spec.md</code> with the spec named as tie-breaker.</p>
+</li>
+<li>
+<p><strong>17 tasks across the spec's 6 slices</strong>, tracer-bullet ordered — after Task 6 the whole loop runs end-to-end on a fake pipeline; every later task swaps one stub stage for the real thing. Each task pins exact files, the behaviours its failing tests must assert (codes-not-strings, the TechCrunch/Yahoo syndication pair, the 18-months-apart non-collapse, etc.), and a commit point.</p>
+</li>
+<li>
+<p><strong>Spec-coverage check</strong> — a table mapping every spec section to its task, so gaps are visible.</p>
+</li>
+</ol>
+<p>A few deliberate calls worth flagging:</p>
+<ul>
+<li>Added <code>src/jobs/resolve.ts</code> and <code>src/filter/normalize.ts</code> beyond the spec's file list — Resolve had no named home, and the pinned normalization rules deserve their own tested module. Both noted in the structure section.</li>
+<li><code>createDb(path)</code> factory + lazy <code>getDb()</code> singleton so all DB tests run against <code>:memory:</code> and never touch <code>data/</code>.</li>
+<li>Task 9 is the pinned point to verify real <code>@tavily/core</code> parameter names against the installed SDK, since the spec's params are written from docs.</li>
+<li>The <code>exclusion_code</code> CHECK set uses CONTEXT.md's six values (including <code>llm_excluded</code>), while the Classify writers follow the spec's "same vocabulary, detail = LLM" behaviour.</li>
+</ul>
+<p><strong>Plan complete and saved to <code>docs/2-plan.md</code>. Two execution options when you're ready to build:</strong></p>
+<ol>
+<li><strong>Subagent-Driven (recommended)</strong> — I dispatch a fresh subagent per task, review between tasks</li>
+<li><strong>Inline Execution</strong> — I execute tasks in this session with checkpoints</li>
+</ol>
+<p>Which approach — or would you like to review/adjust the plan first?</p></div></div></div>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<span class="disabled">&larr; Prev</span>
+<span class="current">1</span>
+<a href="page-002.html">2</a>
+<a href="page-002.html">Next &rarr;</a>
+</div>
+
+    </div>
+    <script>
+document.querySelectorAll('time[data-timestamp]').forEach(function(el) {
+    const timestamp = el.getAttribute('data-timestamp');
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    if (isToday) { el.textContent = timeStr; }
+    else { el.textContent = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + timeStr; }
+});
+document.querySelectorAll('pre.json').forEach(function(el) {
+    let text = el.textContent;
+    text = text.replace(/"([^"]+)":/g, '<span style="color: #ce93d8">"$1"</span>:');
+    text = text.replace(/: "([^"]*)"/g, ': <span style="color: #81d4fa">"$1"</span>');
+    text = text.replace(/: (\d+)/g, ': <span style="color: #ffcc80">$1</span>');
+    text = text.replace(/: (true|false|null)/g, ': <span style="color: #f48fb1">$1</span>');
+    el.innerHTML = text;
+});
+document.querySelectorAll('.truncatable').forEach(function(wrapper) {
+    const content = wrapper.querySelector('.truncatable-content');
+    const btn = wrapper.querySelector('.expand-btn');
+    if (content.scrollHeight > 250) {
+        wrapper.classList.add('truncated');
+        btn.addEventListener('click', function() {
+            if (wrapper.classList.contains('truncated')) { wrapper.classList.remove('truncated'); wrapper.classList.add('expanded'); btn.textContent = 'Show less'; }
+            else { wrapper.classList.remove('expanded'); wrapper.classList.add('truncated'); btn.textContent = 'Show more'; }
+        });
+    }
+});
+</script>
+</body>
+</html>
