@@ -236,7 +236,7 @@ function isPrivateOrReservedIp(address: string): boolean {
 	if (address.includes(".")) {
 		const parts = address.split(".").map(Number);
 		if (parts.length !== 4) return false;
-		const [a, b, _c] = parts;
+		const [a, b] = parts;
 
 		// Loopback: 127.x.x.x
 		if (a === 127) return true;
@@ -260,6 +260,9 @@ function isPrivateOrReservedIp(address: string): boolean {
 
 	// Link-local: fe80::/10 — starts with fe8, fe9, fea, feb
 	if (/^fe[89ab]/i.test(addr)) return true;
+
+	// IPv6 ULA: fc00::/7 — private addresses like fdXX:: and fcXX::
+	if (/^f[cd]/i.test(addr)) return true;
 
 	// Mapped IPv4 private addresses (::ffff:192.168.x.x etc.)
 	// These would be caught by the embedded IPv4 part — handle the common case
@@ -481,7 +484,10 @@ async function fetchHomepage(startUrl: string): Promise<string> {
 		const chunks: Uint8Array[] = [];
 		for await (const chunk of res.body as AsyncIterable<Uint8Array>) {
 			bodyBytes += chunk.length;
-			if (bodyBytes > MAX_BODY_BYTES) break;
+			if (bodyBytes > MAX_BODY_BYTES) {
+				await res.body?.cancel().catch(() => {});
+				break;
+			}
 			chunks.push(chunk);
 		}
 
@@ -631,28 +637,47 @@ async function callLlmForHomepage(
 		apiKey: process.env.ANTHROPIC_API_KEY ?? "",
 	});
 
+	// Sanitize company name to limit prompt-injection blast radius
+	const safeName = companyName.replace(/["\\]/g, " ").slice(0, 100).trim();
+
 	const candidateList = candidates
 		.map((c, i) => `${i}: ${c.url} — ${c.title}`)
 		.join("\n");
 
-	const prompt = `Which of the following search results is the official homepage for the company "${companyName}"? Reply with ONLY a JSON object matching the schema. If none are the company's official homepage, use "none".
+	const prompt = `Which of the following search results is the official homepage for the company "${safeName}"? If none are the company's official homepage, use "none".
 
 Candidates:
-${candidateList}
-
-Respond with JSON: {"candidate_index": <0-${candidates.length - 1} or "none">}`;
+${candidateList}`;
 
 	try {
 		const response = await anthropic.messages.create({
 			max_tokens: 64,
 			messages: [{ content: prompt, role: "user" }],
 			model: HAIKU_MODEL,
+			output_config: {
+				format: {
+					schema: {
+						additionalProperties: false,
+						properties: {
+							candidate_index: {
+								oneOf: [
+									{ maximum: 4, minimum: 0, type: "integer" },
+									{ const: "none", type: "string" },
+								],
+							},
+						},
+						required: ["candidate_index"],
+						type: "object",
+					},
+					type: "json_schema",
+				},
+			},
 		});
 
 		const text =
 			response.content[0]?.type === "text" ? response.content[0].text : "";
 
-		// Parse JSON response
+		// Parse and validate JSON response
 		const parsed = JSON.parse(text.trim()) as {
 			candidate_index: number | "none";
 		};
