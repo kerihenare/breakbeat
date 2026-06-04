@@ -36,7 +36,7 @@ pnpm db:reset                 # fresh demo
 - [`docs/0-brief.md`](docs/0-brief.md) — original exercise brief
 - [`docs/1-spec.md`](docs/1-spec.md) — design spec: architecture, pipeline, trade-offs (source of truth)
 - [`docs/2-plan.md`](docs/2-plan.md) — implementation plan with checkbox-tracked tasks
-- [`docs/3-implementation-prompt.md`](docs/3-implementation-promptiteup.md) — prompt provided to sonnet implementer
+- [`docs/3-implementation-prompt.md`](docs/3-implementation-prompt.md) — prompt provided to sonnet implementer
 - [`docs/4-agent-writeup.md`](docs/4-agent-writeup.md) — approach, trade-offs, out-of-scope, next steps
 - [`docs/5-agent-transcript.md`](docs/5-agent-transcript.md) — agent transcript of the implementation session
 - [`CONTEXT.md`](CONTEXT.md) — domain glossary (Job, Result, Exclusion, Collapse, etc.)

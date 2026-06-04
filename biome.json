@@ -7,17 +7,8 @@
 					"level": "on",
 					"options": {
 						"groups": [
-							[
-								":NODE:",
-								":PACKAGE:",
-								":PACKAGE_WITH_PROTOCOL:",
-								":URL:"
-							],
-							[
-								"~/**",
-								":ALIAS:",
-								":PATH:"
-							]
+							[":NODE:", ":PACKAGE:", ":PACKAGE_WITH_PROTOCOL:", ":URL:"],
+							["~/**", ":ALIAS:", ":PATH:"]
 						],
 						"identifierOrder": "natural"
 					}
@@ -43,7 +34,8 @@
 		"includes": [
 			"**",
 			"!package.json",
-			"!public/htmx.min.js"
+			"!public/htmx.min.js",
+			"!docs/claude-code-sessions"
 		]
 	},
 	"formatter": {
@@ -63,9 +55,7 @@
 	},
 	"overrides": [
 		{
-			"includes": [
-				"**/*.astro"
-			],
+			"includes": ["**/*.astro"],
 			"linter": {
 				"rules": {
 					"correctness": {
