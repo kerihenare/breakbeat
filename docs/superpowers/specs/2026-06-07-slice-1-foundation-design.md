@@ -43,6 +43,8 @@ Each decision lists the approaches considered and the chosen option. These are t
 **Approaches:** (a) one Nest app that also hosts the BullMQ processor in-process; (b) NestJS monorepo (`apps/api`, `apps/worker`, `libs/*`); (c) one codebase, **two entrypoints** — `main.ts` (HTTP) and `worker.ts` (a Nest *application context*, no HTTP listener) — sharing one module graph.
 **Chosen: (c).** It models the real split (web dyno vs worker dyno) the brief's "background job" intent wants, keeps deploy/runtime honest (the worker can't accidentally serve HTTP, the API can't accidentally process jobs unless we register it to), and avoids monorepo tooling overhead for a single-team local exercise. (a) blurs the boundary the whole point of BullMQ is to draw; (b) is more ceremony than a local exercise warrants. Compose runs `app` and `worker` as two services off one image.
 
+**Slice-1 scope of the worker (self-grill #4):** `worker.ts` is included now but **minimal** — it boots a Nest application context, connects to Redis, logs "worker started", and registers **no** processors. The two-process compose shape and the Dockerfile's dual command are foundation concerns (cheap now, awkward to retrofit); real processors arrive in Slice 3. The worker has no HTTP health probe in Slice 1 (compose observes process liveness + the started log line).
+
 ### 3.2 Architecture — Hexagonal + Vertical Slice + DDD
 - **Vertical slices** are NestJS modules under `src/modules/<slice>`. Slice 1 creates only `health` (and a dev-only `debug`).
 - Each slice follows a **hexagonal** internal shape:
@@ -67,10 +69,12 @@ A single Zod schema validates `process.env` at boot, exposed through a typed con
 
 ### 3.5 Persistence driver & migrations — Drizzle + postgres.js, infrastructure-only
 **Approaches:** Prisma (schema-centric, fights hexagonal), TypeORM (active-record/decorator leakage into domain), raw `pg` + node-pg-migrate (max purity, hand-mapped), Kysely/Drizzle (typed, SQL-first).
-**Chosen: Drizzle ORM + drizzle-kit migrations over the `postgres` (postgres.js) driver**, confined to `src/shared/database` and slice `infrastructure/`. It keeps the domain ORM-free (repositories are adapters mapping rows ↔ domain objects), gives typed SQL + a real migration workflow, and is light. Slice 1 ships the connection module, drizzle config, and a **baseline migration** (a `schema_migrations`/health marker table is sufficient — real `jobs`/`results` schema is **Slice 2**). `db:migrate` and `db:reset` scripts exist.
+**Chosen: Drizzle ORM + drizzle-kit migrations over the `postgres` (postgres.js) driver**, confined to `src/shared/database` and slice `infrastructure/`. It keeps the domain ORM-free (repositories are adapters mapping rows ↔ domain objects), gives typed SQL + a real migration workflow, and is light. Slice 1 ships the connection module, drizzle config, and a **minimal viable baseline migration** (a `schema_migrations` marker table) whose job is to **prove the migration pipeline itself** — the rail Slice 2's real `jobs`/`results` schema stands on. `db:migrate`, `db:generate`, and `db:reset` scripts exist.
 
-### 3.6 Logging — `nestjs-pino` to stdout + a fail-open VictoriaLogs shipper
-Structured JSON logging via **`nestjs-pino`** (pino). Always writes to stdout (dev-readable, container-native). When `VICTORIALOGS_URL` is set, a **pino transport** ships newline-delimited JSON to VictoriaLogs' JSON-line ingestion endpoint (`POST {url}/insert/jsonline` with `_stream_fields`, `_msg_field=msg`, `_time_field=time`; exact query params verified against current VictoriaLogs docs at implementation). The shipper is **fail-open**: a transport error never blocks a request or crashes the app, but it surfaces a single throttled stderr warning (it does **not** silently swallow ship failures). Each log line carries a correlation/request id.
+**Migration application (self-grill #2):** migrations are applied **explicitly**, never silently inside Nest bootstrap. The container entrypoint runs `pnpm db:migrate` (idempotent) *before* starting the app; host devs run it themselves. This keeps schema changes an observable, intentional step.
+
+### 3.6 Logging — `nestjs-pino` to stdout (source of truth) + a fail-open VictoriaLogs shipper
+Structured JSON logging via **`nestjs-pino`** (pino). **stdout JSON is the source of truth** (dev-readable, container-native); the VictoriaLogs delivery is an *attached* pino transport, not the primary sink — so swapping to a collector sidecar later (the production-shaped alternative, documented in the README) is non-breaking. When `VICTORIALOGS_URL` is set, the transport ships newline-delimited JSON to VictoriaLogs' JSON-line ingestion endpoint (`POST {url}/insert/jsonline` with `_stream_fields`, `_msg_field=msg`, `_time_field=time`; exact query params verified against current VictoriaLogs docs at implementation). The shipper is **fail-open**: a transport error never blocks a request or crashes the app, but it surfaces a single throttled stderr warning (it does **not** silently swallow ship failures). Each log line carries a correlation/request id.
 
 ### 3.7 Error reporting — Sentry SDK pointed at Bugsink
 Bugsink is Sentry-protocol-compatible. Use **`@sentry/nestjs`** (+ `@sentry/node`) initialised with `SENTRY_DSN` = the Bugsink project DSN. The Nest Sentry integration installs a global exception filter so unhandled errors report automatically. With no DSN the SDK is a **no-op** (keyless clone safe). The DSN isn't known until a Bugsink project is created; the README documents: open Bugsink → log in → create project → copy DSN into `.env`. A dev-only `GET /debug/error` (guarded to non-production) throws to verify capture end-to-end.
@@ -94,7 +98,9 @@ Services (all on one bridge network, named volumes for state):
 | `app` | built from `Dockerfile` (Node 26 + corepack/pnpm) | `${PORT}` | `pnpm dev`; bind-mount for hot reload; `depends_on` postgres+redis healthy |
 | `worker` | same image | — | `pnpm worker`; same `depends_on` |
 
-`app`/`worker` containerise dev to honour "Docker compose development environment"; the README also documents the **infra-only** alternative (a compose profile for backing services + `pnpm dev`/`pnpm worker` on the host) for fastest inner-loop iteration. Compose reads `.env` via `env_file`; service-to-service URLs use service names (`postgres`, `redis`, `victorialogs`).
+`app`/`worker` containerise dev to honour "Docker compose development environment"; the README also documents the **infra-only** alternative (a compose profile for backing services + `pnpm dev`/`pnpm worker` on the host) for fastest inner-loop iteration. Bugsink uses its **own SQLite volume** (its default), deliberately *not* our Postgres, so a third-party tool's schema never couples to our migrations (self-grill #5).
+
+**Dual-context env URLs (self-grill #1):** `.env.example` ships **host-oriented** defaults (`DATABASE_URL=…@localhost:5432`, `REDIS_URL=…@localhost:6379`, `VICTORIALOGS_URL=http://localhost:9428`) so the recommended host inner-loop (`pnpm dev`) works out of the box. Compose then **overrides** the connection URLs per-service via `environment:` (service-name hosts: `postgres`, `redis`, `victorialogs`), so containers get correct values regardless of `.env`. One `.env`, correct in both run modes.
 
 ## 4. Boot data flow
 
@@ -102,7 +108,7 @@ Services (all on one bridge network, named volumes for state):
 2. Config module loads `.env` + env, validates via Zod. Missing infra var with no default → **fatal, friendly message**; missing API key/DSN → **warn + disable feature**.
 3. Logger (pino) initialises; VictoriaLogs transport attaches if `VICTORIALOGS_URL` set.
 4. Sentry initialises if `SENTRY_DSN` set (else no-op).
-5. Database module opens the postgres.js pool; pending migrations are applied (or verified) on boot in dev.
+5. Migrations are applied **before** the process starts (container entrypoint / host `pnpm db:migrate`), then the Database module opens the postgres.js pool. Nest bootstrap does not migrate silently.
 6. `app`: Nest HTTP server listens on `PORT`; Terminus health wired. `worker`: Nest application context starts (no HTTP), ready to register processors in Slice 3.
 7. A structured "service started" log line is emitted (and shipped to VictoriaLogs).
 
@@ -125,6 +131,8 @@ Services (all on one bridge network, named volumes for state):
 4. `GET /debug/error` (dev) → 500; the error appears in the Bugsink project.
 5. `pnpm lint` and `pnpm test` pass.
 6. Removing the API keys from `.env` and rebooting still boots (warnings, no crash).
+
+> **Verification honesty (self-grill #7):** items 1–4 require a running Docker daemon. At implementation, `docker compose up` is attempted; if the environment cannot run Docker, everything host-checkable (build, lint, tests, config validation, app boot) is verified and the live-service checks are reported as **manually verified or deferred** — never claimed as passing without evidence.
 
 ## 8. Risks & mitigations
 - **Bugsink/VictoriaLogs exact env vars & ingestion paths** drift between versions → confirm against current docs (context7/official) during planning/implementation; the design depends only on their *protocols* (Sentry DSN; JSON-line ingest), which are stable.
