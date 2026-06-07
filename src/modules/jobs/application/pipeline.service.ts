@@ -6,6 +6,7 @@ import {
 	JOB_REPOSITORY,
 	type JobRepository,
 } from "../domain/ports/job-repository.port";
+import { ClassifyStage } from "./classify-stage";
 import { FilterStage } from "./filter-stage";
 import { ResolveStage } from "./resolve-stage";
 import { SearchStage } from "./search-stage";
@@ -16,11 +17,7 @@ function delay(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Orchestrates the pipeline. Resolve (Slice 4) and Search (Slice 5) are real;
- * Filter (Slice 6) and Classify (Slice 7) are no-op transitions for now —
- * results stay `included` and unclassified until those slices land.
- */
+/** Orchestrates the pipeline: Resolve → Search → Filter → Classify (all real). */
 @Injectable()
 export class PipelineService {
 	private readonly logger = new Logger(PipelineService.name);
@@ -31,6 +28,7 @@ export class PipelineService {
 		private readonly resolve: ResolveStage,
 		private readonly search: SearchStage,
 		private readonly filter: FilterStage,
+		private readonly classify: ClassifyStage,
 	) {}
 
 	async run(jobId: string): Promise<void> {
@@ -52,7 +50,9 @@ export class PipelineService {
 			await this.filter.run(job);
 			await this.persist(job);
 
-			await this.enter(job, "classifying"); // no-op (Slice 7)
+			await this.enter(job, "classifying");
+			await this.classify.run(job);
+			await this.persist(job);
 
 			job.finalize();
 			await this.persist(job);

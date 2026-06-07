@@ -47,6 +47,7 @@ export const results = pgTable(
 		normalizedUrl: text("normalized_url").notNull(),
 		publishedDate: text("published_date"),
 		sentiment: text("sentiment"),
+		snippet: text("snippet"),
 		sourceDomain: text("source_domain").notNull(),
 		status: text("status").notNull().default("included"),
 		title: text("title").notNull(),

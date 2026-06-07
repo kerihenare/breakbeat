@@ -72,6 +72,7 @@ export class SearchStage {
 					hit.title,
 					hit.sourceDomain,
 					hit.publishedDate,
+					hit.content,
 				);
 				if (await this.results.insertIfNew(result)) inserted++;
 			}

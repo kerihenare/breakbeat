@@ -2,13 +2,16 @@ import { BullModule } from "@nestjs/bullmq";
 import { Module } from "@nestjs/common";
 import { AppConfigService } from "../../shared/config/app-config.service";
 import { ConfigModule } from "../../shared/config/config.module";
+import { ClassifyStage } from "./application/classify-stage";
 import { FilterStage } from "./application/filter-stage";
 import { PipelineService } from "./application/pipeline.service";
 import { ResolveStage } from "./application/resolve-stage";
 import { SearchStage } from "./application/search-stage";
 import { SubmitJob } from "./application/submit-job.use-case";
 import { BRAND_DIRECTORY } from "./domain/ports/brand-directory.port";
+import { CLASSIFIER } from "./domain/ports/classifier.port";
 import { CLOCK } from "./domain/ports/clock.port";
+import { CONTENT_EXTRACTOR } from "./domain/ports/content-extractor.port";
 import { ID_GENERATOR } from "./domain/ports/id-generator.port";
 import { JOB_EVENTS } from "./domain/ports/job-events.port";
 import { JOB_QUEUE } from "./domain/ports/job-queue.port";
@@ -16,6 +19,7 @@ import { JOB_REPOSITORY } from "./domain/ports/job-repository.port";
 import { RESULT_REPOSITORY } from "./domain/ports/result-repository.port";
 import { SEARCH_PROVIDER } from "./domain/ports/search-provider.port";
 import { WEB_CONTEXT } from "./domain/ports/web-context.port";
+import { HaikuClassifier } from "./infrastructure/anthropic/haiku-classifier";
 import { BrandfetchClient } from "./infrastructure/brandfetch/brandfetch-client";
 import { SystemClock } from "./infrastructure/clock";
 import { RedisJobEvents } from "./infrastructure/events/redis-job-events";
@@ -27,6 +31,7 @@ import {
 	BullmqJobQueue,
 	PIPELINE_QUEUE,
 } from "./infrastructure/queue/bullmq-job-queue";
+import { TavilyExtractor } from "./infrastructure/tavily/tavily-extractor";
 import { TavilySearch } from "./infrastructure/tavily/tavily-search";
 import { JobEventsController } from "./interface/job-events.controller";
 import { JobsController } from "./interface/jobs.controller";
@@ -78,10 +83,13 @@ function redisConnection(config: AppConfigService): {
 		{ provide: BRAND_DIRECTORY, useClass: BrandfetchClient },
 		{ provide: WEB_CONTEXT, useClass: GoogleContext },
 		{ provide: SEARCH_PROVIDER, useClass: TavilySearch },
+		{ provide: CONTENT_EXTRACTOR, useClass: TavilyExtractor },
+		{ provide: CLASSIFIER, useClass: HaikuClassifier },
 		SubmitJob,
 		ResolveStage,
 		SearchStage,
 		FilterStage,
+		ClassifyStage,
 		PipelineService,
 	],
 })
