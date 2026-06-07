@@ -27,8 +27,12 @@ import { ConfigModule } from "../config/config.module";
 					pinoHttp: {
 						autoLogging: true,
 						base: { service: "breakbeat" },
-						genReqId: (req: IncomingMessage) =>
-							(req.headers["x-request-id"] as string) ?? randomUUID(),
+						genReqId: (req: IncomingMessage) => {
+							const header = req.headers["x-request-id"];
+							return (
+								(Array.isArray(header) ? header[0] : header) ?? randomUUID()
+							);
+						},
 						timestamp: () => `,"time":${Date.now()}`,
 						transport: { targets },
 					},

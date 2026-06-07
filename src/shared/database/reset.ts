@@ -13,7 +13,7 @@ async function main(): Promise<void> {
 		await sql.unsafe("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
 		process.stdout.write("[reset] public schema dropped and recreated\n");
 	} finally {
-		await sql.end();
+		await sql.end({ timeout: 5 });
 	}
 }
 

@@ -12,7 +12,7 @@ async function main(): Promise<void> {
 		await migrate(drizzle(sql), { migrationsFolder: "./migrations" });
 		process.stdout.write("[migrate] migrations applied\n");
 	} finally {
-		await sql.end();
+		await sql.end({ timeout: 5 });
 	}
 }
 
