@@ -4,10 +4,11 @@ import { eq } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { DRIZZLE } from "../../../../shared/database/database.tokens";
 import { jobs, warnings } from "../../../../shared/database/schema";
+import { parseEnum, parseEnumOrNull } from "../../../../shared/util/parse-enum";
 import { Job } from "../../domain/job";
-import type { JobStatus } from "../../domain/job-status";
+import { JOB_STATUSES } from "../../domain/job-status";
 import type { JobRepository } from "../../domain/ports/job-repository.port";
-import type { IdentityProvenance } from "../../domain/resolved-identity";
+import { IDENTITY_PROVENANCES } from "../../domain/resolved-identity";
 
 @Injectable()
 export class DrizzleJobRepository implements JobRepository {
@@ -74,8 +75,12 @@ export class DrizzleJobRepository implements JobRepository {
 			row.createdAt,
 			{
 				error: row.error,
-				provenance: row.provenance as IdentityProvenance | null,
-				status: row.status as JobStatus,
+				provenance: parseEnumOrNull(
+					row.provenance,
+					IDENTITY_PROVENANCES,
+					"provenance",
+				),
+				status: parseEnum(row.status, JOB_STATUSES, "job status"),
 				warnings: warningRows.map((w) => ({ message: w.message })),
 			},
 		);

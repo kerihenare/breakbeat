@@ -3,9 +3,20 @@ import type { Confidence, Exclusion, ExclusionCode } from "./exclusion";
 
 export type ResultStatus = "included" | "excluded";
 
+export const RESULT_STATUSES: readonly ResultStatus[] = [
+	"included",
+	"excluded",
+];
+
 // Net-new, mocked in v1 (DESIGN-BRIEF §2) — populated by the UI fixtures / a
 // future sentiment pass; nullable in the domain.
 export type Sentiment = "positive" | "neutral" | "negative";
+
+export const SENTIMENTS: readonly Sentiment[] = [
+	"positive",
+	"neutral",
+	"negative",
+];
 
 type ResultState = {
 	status?: ResultStatus;
@@ -42,6 +53,14 @@ export class Result {
 		this.contentType = state.contentType ?? null;
 		this.confidence = state.confidence ?? null;
 		this.sentiment = state.sentiment ?? null;
+		// Invariant: excluded ⟺ carries an Exclusion. Guards against a corrupt
+		// row or mapper bug constructing an inconsistent Result.
+		if (this.status === "excluded" && this.exclusion === null) {
+			throw new Error("Result is excluded but has no Exclusion");
+		}
+		if (this.status === "included" && this.exclusion !== null) {
+			throw new Error("Result is included but carries an Exclusion");
+		}
 	}
 
 	get isExcluded(): boolean {

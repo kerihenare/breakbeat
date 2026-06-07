@@ -2,6 +2,13 @@ import type { SearchWindow } from "./window";
 
 export type IdentityProvenance = "url_provided" | "heuristic" | "llm" | "none";
 
+export const IDENTITY_PROVENANCES: readonly IdentityProvenance[] = [
+	"url_provided",
+	"heuristic",
+	"llm",
+	"none",
+];
+
 /**
  * The company name plus zero or more own domains and social handles, plus the
  * negative-match companies (similarly-named brands) used to suppress false

@@ -12,6 +12,17 @@ export type JobStatus =
 	| "failed"
 	| "done_with_warnings";
 
+export const JOB_STATUSES: readonly JobStatus[] = [
+	"pending",
+	"resolving",
+	"searching",
+	"filtering",
+	"classifying",
+	"done",
+	"failed",
+	"done_with_warnings",
+];
+
 /** Terminal states — no outgoing edges. */
 export const TERMINAL_STATES: ReadonlySet<JobStatus> = new Set([
 	"done",

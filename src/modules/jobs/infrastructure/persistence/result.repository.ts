@@ -3,17 +3,20 @@ import { and, eq } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { DRIZZLE } from "../../../../shared/database/database.tokens";
 import { results } from "../../../../shared/database/schema";
-import type { ContentType } from "../../domain/content-type";
-import type {
-	Confidence,
-	Exclusion,
-	ExclusionCode,
+import { parseEnum, parseEnumOrNull } from "../../../../shared/util/parse-enum";
+import { CONTENT_TYPES } from "../../domain/content-type";
+import {
+	CONFIDENCES,
+	EXCLUSION_CODES,
+	type Exclusion,
 } from "../../domain/exclusion";
 import type { ResultRepository } from "../../domain/ports/result-repository.port";
-import { Result, type ResultStatus, type Sentiment } from "../../domain/result";
+import { RESULT_STATUSES, Result, SENTIMENTS } from "../../domain/result";
 
 type ResultRow = typeof results.$inferSelect;
 
+// Validate DB text columns against their closed sets before narrowing — a
+// corrupt/unexpected value fails fast rather than entering the domain via `as`.
 function toDomain(row: ResultRow): Result {
 	return new Result(
 		row.id,
@@ -24,16 +27,24 @@ function toDomain(row: ResultRow): Result {
 		row.sourceDomain,
 		row.publishedDate,
 		{
-			confidence: row.confidence as Confidence | null,
-			contentType: row.contentType as ContentType | null,
+			confidence: parseEnumOrNull(row.confidence, CONFIDENCES, "confidence"),
+			contentType: parseEnumOrNull(
+				row.contentType,
+				CONTENT_TYPES,
+				"content type",
+			),
 			exclusion: row.exclusionCode
 				? {
-						code: row.exclusionCode as ExclusionCode,
+						code: parseEnum(
+							row.exclusionCode,
+							EXCLUSION_CODES,
+							"exclusion code",
+						),
 						detail: row.exclusionDetail,
 					}
 				: null,
-			sentiment: row.sentiment as Sentiment | null,
-			status: row.status as ResultStatus,
+			sentiment: parseEnumOrNull(row.sentiment, SENTIMENTS, "sentiment"),
+			status: parseEnum(row.status, RESULT_STATUSES, "result status"),
 		},
 	);
 }

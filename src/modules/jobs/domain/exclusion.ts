@@ -7,9 +7,19 @@ export type ExclusionCode =
 	| "out_of_window"
 	| "duplicate";
 
+export const EXCLUSION_CODES: readonly ExclusionCode[] = [
+	"own_channel",
+	"aggregator",
+	"ecommerce_review",
+	"out_of_window",
+	"duplicate",
+];
+
 export type Exclusion = {
 	readonly code: ExclusionCode;
 	readonly detail: string | null;
 };
 
 export type Confidence = "high" | "low";
+
+export const CONFIDENCES: readonly Confidence[] = ["high", "low"];
