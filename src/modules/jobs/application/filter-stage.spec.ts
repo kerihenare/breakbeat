@@ -42,11 +42,11 @@ class FakeRepo implements ResultRepository {
 	async insertIfNew(): Promise<boolean> {
 		return true;
 	}
-	async findIncludedByJob(): Promise<Result[]> {
-		return this.items.filter((r) => !r.isExcluded);
+	async findIncludedByJob(jobId: string): Promise<Result[]> {
+		return this.items.filter((r) => r.jobId === jobId && !r.isExcluded);
 	}
-	async findAllByJob(): Promise<Result[]> {
-		return this.items;
+	async findAllByJob(jobId: string): Promise<Result[]> {
+		return this.items.filter((r) => r.jobId === jobId);
 	}
 	async markExcluded(id: string, exclusion: Exclusion): Promise<void> {
 		this.items
