@@ -98,7 +98,10 @@ export class ClassifyStage {
 				classifiedIds.add(v.id);
 				writes.push(
 					v.exclude !== "none"
-						? this.results.markExcluded(v.id, { code: v.exclude, detail: "LLM" })
+						? this.results.markExcluded(v.id, {
+								code: v.exclude,
+								detail: "LLM",
+							})
 						: this.results.markClassified(v.id, v.contentType, v.confidence),
 				);
 			}
