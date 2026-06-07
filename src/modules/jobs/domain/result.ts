@@ -46,6 +46,7 @@ export class Result {
 		readonly title: string,
 		readonly sourceDomain: string,
 		readonly publishedDate: string | null,
+		readonly snippet: string | null = null,
 		state: ResultState = {},
 	) {
 		this.status = state.status ?? "included";

@@ -27,6 +27,7 @@ function toDomain(row: ResultRow): Result {
 		row.title,
 		row.sourceDomain,
 		row.publishedDate,
+		row.snippet,
 		{
 			confidence: parseEnumOrNull(row.confidence, CONFIDENCES, "confidence"),
 			contentType: parseEnumOrNull(
@@ -67,6 +68,7 @@ export class DrizzleResultRepository implements ResultRepository {
 				normalizedUrl: result.normalizedUrl,
 				publishedDate: result.publishedDate,
 				sentiment: result.sentiment,
+				snippet: result.snippet,
 				sourceDomain: result.sourceDomain,
 				status: result.status,
 				title: result.title,
