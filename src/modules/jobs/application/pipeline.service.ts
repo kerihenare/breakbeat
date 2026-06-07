@@ -6,6 +6,7 @@ import {
 	JOB_REPOSITORY,
 	type JobRepository,
 } from "../domain/ports/job-repository.port";
+import { FilterStage } from "./filter-stage";
 import { ResolveStage } from "./resolve-stage";
 import { SearchStage } from "./search-stage";
 
@@ -29,6 +30,7 @@ export class PipelineService {
 		@Inject(JOB_EVENTS) private readonly events: JobEvents,
 		private readonly resolve: ResolveStage,
 		private readonly search: SearchStage,
+		private readonly filter: FilterStage,
 	) {}
 
 	async run(jobId: string): Promise<void> {
@@ -46,7 +48,10 @@ export class PipelineService {
 			await this.search.run(job);
 			await this.persist(job);
 
-			await this.enter(job, "filtering"); // no-op (Slice 6)
+			await this.enter(job, "filtering");
+			await this.filter.run(job);
+			await this.persist(job);
+
 			await this.enter(job, "classifying"); // no-op (Slice 7)
 
 			job.finalize();

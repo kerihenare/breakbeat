@@ -2,6 +2,7 @@ import { BullModule } from "@nestjs/bullmq";
 import { Module } from "@nestjs/common";
 import { AppConfigService } from "../../shared/config/app-config.service";
 import { ConfigModule } from "../../shared/config/config.module";
+import { FilterStage } from "./application/filter-stage";
 import { PipelineService } from "./application/pipeline.service";
 import { ResolveStage } from "./application/resolve-stage";
 import { SearchStage } from "./application/search-stage";
@@ -80,6 +81,7 @@ function redisConnection(config: AppConfigService): {
 		SubmitJob,
 		ResolveStage,
 		SearchStage,
+		FilterStage,
 		PipelineService,
 	],
 })
