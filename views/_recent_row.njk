@@ -1,6 +1,12 @@
 <li>
-	<a href="/jobs/{{ j.id | urlencode }}" hx-get="/jobs/{{ j.id | urlencode }}" hx-target="#results" hx-push-url="true">
-		{{ j.companyName }}
+	<a
+		href="/jobs/{{ j.id | urlencode }}"
+		hx-get="/jobs/{{ j.id | urlencode }}"
+		hx-target="#results"
+		hx-push-url="true"
+		class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md no-underline text-ink hover:bg-newsprint-subtle"
+	>
+		<span class="truncate">{{ j.companyName }}</span>
+		<span class="mono text-xs shrink-0">{{ j.status }}</span>
 	</a>
-	<span class="status">{{ j.status }}</span>
 </li>

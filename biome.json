@@ -36,6 +36,7 @@
 			"!package.json",
 			"!.claude",
 			"!public",
+			"!src/client/styles.css",
 			"!docs/claude-code-sessions"
 		]
 	},

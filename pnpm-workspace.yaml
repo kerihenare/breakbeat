@@ -1,5 +1,7 @@
 allowBuilds:
   '@nestjs/core': true
+  # Optional native file watcher for Tailwind; the polling fallback is fine.
+  '@parcel/watcher': false
   esbuild: true
   # Optional native accelerator for msgpackr (BullMQ); the pure-JS fallback is fine.
   msgpackr-extract: false

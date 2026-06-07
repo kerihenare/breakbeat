@@ -1,45 +1,77 @@
-<article>
-	<header>
-		<h1>{{ view.companyName }}</h1>
-		<p>
-			Status: <strong>{{ view.status }}</strong>
-			{% if view.provenance %} · identified via {{ view.provenance }}{% endif %}
-			· window {{ view.window.start }} → {{ view.window.end }}
+<article class="max-w-4xl">
+	<header class="border-b border-border-hair pb-4 mb-4">
+		<div class="flex items-center gap-3 flex-wrap">
+			<h1 class="text-3xl font-semibold tracking-tight m-0 text-ink-deep">{{ view.companyName }}</h1>
+			<bb-job-status status="{{ view.status }}"></bb-job-status>
+		</div>
+		<p class="text-text-muted text-sm mt-1">
+			{% if view.provenance %}identified via {{ view.provenance }} · {% endif %}
+			window <span class="mono">{{ view.window.start }} → {{ view.window.end }}</span>
 		</p>
-		<p class="counts">
-			<span>{{ view.counts.returned }} returned</span> ·
-			<span>{{ view.counts.excluded }} excluded</span> ·
-			<span>{{ view.counts.classified }} classified</span>
-		</p>
-		{% if view.error %}<p class="error">Failed: {{ view.error }}</p>{% endif %}
-		{% for w in view.warnings %}<p class="warning">⚠ {{ w }}</p>{% endfor %}
+
+		<!-- Count triad (three clear figures, not a hero-metric block) -->
+		<div class="flex gap-8 mt-4">
+			<div><div class="text-2xl font-semibold">{{ view.counts.returned }}</div><div class="mono">returned</div></div>
+			<div><div class="text-2xl font-semibold">{{ view.counts.excluded }}</div><div class="mono">excluded</div></div>
+			<div><div class="text-2xl font-semibold">{{ view.counts.classified }}</div><div class="mono">classified</div></div>
+		</div>
+
+		{% if view.error %}
+		<p class="mt-3 bg-alert-coral-surface text-ink rounded-lg px-3 py-2 text-sm">⚠ Failed: {{ view.error }}</p>
+		{% endif %}
+		{% for w in view.warnings %}
+		<p class="mt-2 bg-alert-coral-surface text-ink rounded-lg px-3 py-2 text-sm" role="status">⚠ {{ w }}</p>
+		{% endfor %}
 	</header>
 
-	{% if view.groups.length == 0 and view.excluded.length == 0 %}
-		<p>No results yet…</p>
+	{% if view.groups.length > 0 %}
+	<!-- Sentiment summary (mocked) -->
+	<section class="mb-5">
+		<h2 class="text-sm font-medium text-text-muted mb-2 uppercase tracking-wide">Sentiment</h2>
+		<bb-sentiment-gauge
+			positive="{{ view.sentiment.positive }}"
+			neutral="{{ view.sentiment.neutral }}"
+			negative="{{ view.sentiment.negative }}"
+		></bb-sentiment-gauge>
+	</section>
+
+	<!-- Filter tabs (client-side, bb-result-filter) -->
+	<bb-result-filter class="bb-filter block mb-4" role="tablist" aria-label="Filter by content type">
+		<button type="button" data-type="all" role="tab">All</button>
+		{% for group in view.groups %}
+		<button type="button" data-type="{{ group.key }}" role="tab">{{ group.label }} ({{ group.items.length }})</button>
+		{% endfor %}
+	</bb-result-filter>
 	{% endif %}
 
-	{% for group in view.groups %}{% include "_result_group.njk" %}{% endfor %}
+	{% if view.groups.length == 0 and view.excluded.length == 0 %}
+		<p class="text-text-muted">No results yet…</p>
+	{% endif %}
+
+	<div id="result-groups">
+		{% for group in view.groups %}{% include "_result_group.njk" %}{% endfor %}
+	</div>
 
 	{% if view.excluded.length > 0 %}
-	<details class="excluded">
-		<summary>
-			Excluded
-			{% for ex in view.excluded %}· {{ ex.label }} ({{ ex.items.length }}) {% endfor %}
+	<details class="mt-6 border-t border-border-hair pt-4">
+		<summary class="cursor-pointer text-text-muted text-sm">
+			Excluded{% for ex in view.excluded %} · {{ ex.label }} ({{ ex.items.length }}){% endfor %}
 		</summary>
-		{% for ex in view.excluded %}
-		<section>
-			<h4>{{ ex.label }}</h4>
-			<ul>
-				{% for item in ex.items %}
-				<li>
-					<a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">{{ item.title }}</a>
-					<small>{{ item.sourceDomain }}{% if item.exclusionDetail %} · {{ item.exclusionDetail }}{% endif %}</small>
-				</li>
-				{% endfor %}
-			</ul>
-		</section>
-		{% endfor %}
+		<div class="mt-3 grid gap-4">
+			{% for ex in view.excluded %}
+			<section>
+				<h4 class="text-sm font-medium m-0 mb-1">{{ ex.label }}</h4>
+				<ul class="list-none p-0 m-0 grid gap-1">
+					{% for item in ex.items %}
+					<li class="text-sm">
+						<a href="{{ item.url }}" target="_blank" rel="noopener noreferrer" class="text-text-muted">{{ item.title }}</a>
+						<span class="mono">· {{ item.sourceDomain }}{% if item.exclusionDetail %} · {{ item.exclusionDetail }}{% endif %}</span>
+					</li>
+					{% endfor %}
+				</ul>
+			</section>
+			{% endfor %}
+		</div>
 	</details>
 	{% endif %}
 </article>

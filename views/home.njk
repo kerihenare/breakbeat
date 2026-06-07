@@ -1,21 +1,43 @@
 {% extends "layout.njk" %}
 {% block content %}
-<section>
-	<h1>Track a company's coverage</h1>
-	<form hx-post="/jobs" hx-target="#results" hx-swap="innerHTML" method="post" action="/jobs">
-		<label>Company name <input type="text" name="companyName" placeholder="Acme" /></label>
-		<label>Homepage URL <input type="url" name="homepageUrl" placeholder="https://acme.com" /></label>
-		<button type="submit">Start search</button>
-		<p><small>Provide the URL for unambiguous results.</small></p>
-	</form>
-</section>
+<div class="lg:grid lg:grid-cols-[320px_1fr] lg:h-[calc(100vh-57px)]">
+	<!-- Search rail -->
+	<aside class="bg-newsprint-muted border-r border-border-hair p-5 lg:overflow-y-auto">
+		<form
+			hx-post="/jobs"
+			hx-target="#results"
+			hx-swap="innerHTML"
+			method="post"
+			action="/jobs"
+			class="grid gap-3"
+		>
+			<h1 class="text-base font-semibold m-0">Track a company</h1>
+			<label class="grid gap-1 text-sm font-medium">Company name
+				<input type="text" name="companyName" placeholder="Acme"
+					class="bg-page-white border border-border-muted rounded-lg px-3 py-2 font-normal" />
+			</label>
+			<label class="grid gap-1 text-sm font-medium">Homepage URL
+				<input type="url" name="homepageUrl" placeholder="https://acme.com"
+					class="bg-page-white border border-border-muted rounded-lg px-3 py-2 font-normal" />
+			</label>
+			<button type="submit"
+				class="bg-ink text-page-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-ink-soft cursor-pointer">
+				Start search
+			</button>
+			<p class="text-text-muted text-xs m-0">Provide the URL for unambiguous results.</p>
+		</form>
 
-<section id="results"></section>
+		<h2 class="text-sm font-medium text-text-muted mt-6 mb-2 uppercase tracking-wide">Recent jobs</h2>
+		<ul id="recent-jobs" class="list-none p-0 m-0 grid gap-1">
+			{% for j in recent %}{% include "_recent_row.njk" %}{% endfor %}
+		</ul>
+	</aside>
 
-<section>
-	<h2>Recent jobs</h2>
-	<ul id="recent-jobs">
-		{% for j in recent %}{% include "_recent_row.njk" %}{% endfor %}
-	</ul>
-</section>
+	<!-- Results pane -->
+	<section id="results" class="p-6 lg:overflow-y-auto">
+		<div class="text-text-muted max-w-prose mt-12 text-center mx-auto">
+			<p class="text-lg">Name a company to start tracking its coverage.</p>
+		</div>
+	</section>
+</div>
 {% endblock %}

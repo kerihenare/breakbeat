@@ -1,8 +1,11 @@
-<li>
-	<a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">{{ item.title }}</a>
-	<small>
+<li class="bg-card-cream border border-border-hair rounded-lg px-3 py-2">
+	<a href="{{ item.url }}" target="_blank" rel="noopener noreferrer" class="font-medium text-ink hover:text-press-blue-deep line-clamp-2">
+		{{ item.title }}
+		<span aria-label="opens in a new tab"> ↗</span>
+	</a>
+	<div class="mono mt-1">
 		{{ item.sourceDomain }}
 		{% if item.publishedDate %} · {{ item.publishedDate }}{% else %} · date unknown{% endif %}
-		{% if item.confidence == "low" %} · low confidence{% endif %}
-	</small>
+		{% if item.confidence == "low" %} · <span class="text-aether-gold">low confidence</span>{% endif %}
+	</div>
 </li>

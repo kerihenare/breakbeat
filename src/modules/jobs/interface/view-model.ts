@@ -48,9 +48,25 @@ export type JobView = {
 	warnings: string[];
 	error: string | null;
 	counts: { returned: number; excluded: number; classified: number };
+	sentiment: { positive: number; neutral: number; negative: number };
 	groups: { key: string; label: string; items: ResultItemView[] }[];
 	excluded: { code: string; label: string; items: ResultItemView[] }[];
 };
+
+export type Sentiment = "positive" | "neutral" | "negative";
+
+// Sentiment is net-new and MOCKED (DESIGN-BRIEF §2/§10): the pipeline produces
+// none. Derived deterministically from the result id so the gauge has stable,
+// believable proportions; isolated here so a real sentiment pass swaps in
+// without touching the templates.
+export function mockSentiment(seed: string): Sentiment {
+	let h = 0;
+	for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+	const m = h % 10;
+	if (m < 5) return "positive";
+	if (m < 8) return "neutral";
+	return "negative";
+}
 
 function toItem(r: Result): ResultItemView {
 	return {
@@ -99,6 +115,9 @@ export function buildJobView(job: Job, results: Result[]): JobView {
 		label: EXCLUSION_LABELS[code as ExclusionCode] ?? code,
 	}));
 
+	const sentiment = { negative: 0, neutral: 0, positive: 0 };
+	for (const r of included) sentiment[mockSentiment(r.id)]++;
+
 	return {
 		companyName: job.companyName,
 		counts: {
@@ -113,6 +132,7 @@ export function buildJobView(job: Job, results: Result[]): JobView {
 		id: job.id,
 		isTerminal: job.isTerminal,
 		provenance: job.provenance,
+		sentiment,
 		status: job.status,
 		warnings: job.warnings.map((w) => w.message),
 		window: job.window,
