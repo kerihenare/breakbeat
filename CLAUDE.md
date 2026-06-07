@@ -43,8 +43,10 @@ Build a basic web app that:
 
 - `CONTEXT.md` — domain language; use its terms exactly (Job, Resolved Identity, Own Channel, Result, Exclusion, Collapse, Content Type, Warning, Angle Query)
 - `docs/0-brief.md` — original exercise brief
-- `docs/1-spec.md` — design spec (source of truth for architecture, pipeline stages, trade-offs)
-- `docs/2-plan.md` — implementation plan (checkbox-tracked tasks; where the spec and plan disagree, the spec wins)
+- `docs/aglow-writeup.md` — re-architecture write-up (approach, trade-offs, next steps)
+- `docs/aglow-transcript.md` — agent-assisted execution transcript
+- `docs/superpowers/specs/` + `docs/superpowers/plans/` — **current** per-slice specs and plans (source of truth for the re-architecture)
+- `docs/1-spec.md` / `docs/2-plan.md` — the v1 (Express/SQLite) spec and plan, **superseded** by the re-architecture
 
 ## Design Context
 
@@ -60,17 +62,23 @@ For any design, redesign, critique, or polish work, use the `/impeccable` skill 
 
 ## Environment
 
-Copy `.env.example` → `.env` and set `ANTHROPIC_API_KEY` and `TAVILY_API_KEY`. Keys load via `node --env-file-if-exists=.env` (no dotenv).
+Copy `.env.example` → `.env`. All API keys are **optional** — each missing one records a Warning and disables just that signal (BrandFetch=resolve, Tavily=search/extract, Anthropic=classify, Google=context, `SENTRY_DSN`=Bugsink). Infra URLs (`DATABASE_URL`/`REDIS_URL`/`VICTORIALOGS_URL`) default to localhost for host runs; Docker Compose overrides them with service names. `.env` loads natively via `process.loadEnvFile` (no dotenv).
 
 ## Development Commands
 
 ```bash
+docker compose up                 # full stack (postgres, redis, victorialogs, bugsink, app, worker)
+# — or, fast inner loop —
+docker compose up -d postgres redis victorialogs bugsink
 pnpm install
-pnpm dev          # run with --watch, loads .env
-pnpm test         # native node --test runner (src/**/*.test.ts)
-pnpm test:watch
-pnpm lint:fix     # biome check --write
-pnpm db:reset     # delete data/breakbeat.db
+pnpm build:client                 # Tailwind v4 + Lit bundle → public/
+pnpm db:migrate                   # apply Drizzle migrations
+pnpm dev                          # HTTP app (client + server watch)  → http://localhost:3000
+pnpm worker                       # BullMQ worker (separate terminal)
+pnpm test                         # jest
+pnpm lint:fix                     # biome check --write
+pnpm db:reset                     # drop + recreate schema, re-migrate (dev only)
+curl -i localhost:3000/demo       # seed a fixture Job to view the UI without keys
 ```
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:970c3bf2 -->

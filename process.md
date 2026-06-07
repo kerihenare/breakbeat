@@ -1,19 +1,18 @@
 # Breakbeat — Process at a Glance
 
-A simple, numbered walkthrough of how a Job goes from input to a reviewable list. For the full rationale, see [`docs/process.md`](docs/process.md).
+A numbered walkthrough of how a Job goes from input to a reviewable list, in the re-architected (`aglow`) pipeline. For the domain language, see [`CONTEXT.md`](CONTEXT.md); for rationale, the per-slice specs in [`docs/superpowers/specs/`](docs/superpowers/specs/).
 
-1. **Submit** — User enters a company name and/or homepage URL on `POST /`. Input is validated, a `companies` row is upserted, a `jobs` row is created, and the page redirects to `GET /:id`.
-2. **Compute the window** — Subtract 36 calendar months from the Job's creation date and store `window_start`/`window_end`. Every later date filter reads these stored bounds.
-3. **Resolve identity** — Establish the Resolved Identity (company name + own domains + social handles):
-   1. If a URL was given, keep its host as an own domain and best-effort fetch the homepage (SSRF-guarded) to confirm the name and scrape handles.
-   2. If only a name was given, find the homepage via heuristic match, then LLM fallback, then degrade gracefully with a Warning.
-4. **Search** — Build exactly 18 Tavily queries from the Resolved Identity and run them concurrently:
-   1. 7 per-content-type queries (news, press release, podcast, blog, newsletter, trade pub, social).
-   2. 6 time-sliced news/press-release queries across three 12-month slices.
-   3. 5 angle queries (funding, acquisition, leadership, partnership, lawsuit/controversy).
-5. **Dedup at insert** — Insert each hit with `INSERT OR IGNORE` against a unique normalized-URL key, so exact-duplicate URLs never become two rows.
-6. **Filter (heuristics)** — Apply deterministic soft Exclusions in order: own channel, aggregator, ecommerce/review, out-of-window. Dateless results are kept and flagged.
+1. **Submit** — User enters a company name and/or homepage URL. With only a name, **BrandFetch Brand Search** offers candidate brands to pick from (disambiguation); a URL skips selection. A `jobs` row is created (status `pending`) and the page redirects to `/jobs/:id`.
+2. **Enqueue** — The Job is placed on the BullMQ `pipeline` queue; a worker process picks it up. The 36-month window is computed once from the Job's creation date.
+3. **Resolve** — Establish the Resolved Identity:
+   1. **BrandFetch Brand API** on the chosen domain → own domains + social handles.
+   2. **Google** search `"{name}" "{domain}" -site:{domain}` → extra company context.
+   3. **BrandFetch Brand Search** on the name → similarly-named brands stored as **negative matches**.
+   Missing signals (no key, no domain, API error) record a Warning and proceed degraded.
+4. **Search** — Build 18 **Tavily** queries from the Resolved Identity (7 per-content-type + 6 time-sliced news/PR + 5 angle), excluding own domains, own-social hosts, the aggregator blocklist, and the negative-match domains. Fire concurrently; per-query failure → Warning, all-fail → Job failed.
+5. **Dedup at insert** — Each hit is inserted against a `UNIQUE(job_id, normalized_url)` constraint, so exact-duplicate URLs never become two rows.
+6. **Filter** — Deterministic soft Exclusions in order: own channel, aggregator, ecommerce/review, out-of-window. Dateless results are kept and flagged.
 7. **Collapse** — Fold near-duplicate titles (within 14 days of a cluster anchor) into the earliest-published original; losers become `excluded, duplicate`.
-8. **Classify** — Batch the surviving results through Claude Haiku to assign one of the seven Content Types and catch any own-channel/aggregator/ecommerce items the heuristics missed.
-9. **Finalize** — Transition the Job to `done` (or `done_with_warnings` if any Warning was recorded; `failed` only on an uncaught error).
-10. **Present** — Render the reviewable list grouped by editorial weight, newest first, with excluded results in a collapsed audit section. The page live-polls via HTMX until the Job reaches a terminal state.
+8. **Extract + Classify** — **Tavily Extract** pulls page content per surviving result; **Claude Haiku** (structured outputs) assigns one of the Content Types and catches any own-channel/aggregator/ecommerce the heuristics missed, using extracted content + identity + negative matches as context. Extract failures degrade to the search snippet; classify failures are a Warning (results left unclassified), never a Job failure.
+9. **Finalize** — Transition to `done` (or `done_with_warnings` if any Warning; `failed` only on an uncaught error in a stage that left nothing to show).
+10. **Present** — Render the reviewable list grouped by editorial weight, newest first, with excluded results in a collapsed audit section. The page streams status via **Server-Sent Events** until the Job reaches a terminal state.
