@@ -1,7 +1,8 @@
 <li class="bg-card-cream border border-border-hair rounded-lg px-3 py-2">
 	<a href="{{ item.url }}" target="_blank" rel="noopener noreferrer" class="font-medium text-ink hover:text-press-blue-deep line-clamp-2">
 		{{ item.title }}
-		<span aria-label="opens in a new tab"> ↗</span>
+		<span aria-hidden="true"> ↗</span>
+		<span class="sr-only">(opens in a new tab)</span>
 	</a>
 	<div class="mono mt-1">
 		{{ item.sourceDomain }}
