@@ -13,6 +13,23 @@ A submitted company becomes a **Job** that moves through a state machine, run by
 
 The page streams status over **Server-Sent Events**; results render grouped by editorial weight with a collapsed excluded audit section. Nothing is deleted — exclusion is a soft, reasoned transition you can inspect.
 
+## Quick Start
+
+Clone → copy env → run. **All API keys are optional** — a keyless clone still boots and runs a Job end-to-end (each missing key degrades to a Warning, never a failure).
+
+```bash
+cp .env.example .env          # leave the keys blank for now
+docker compose up             # postgres, redis, victorialogs, bugsink, app, worker
+```
+
+Open **http://localhost:3000** and submit a company name and/or homepage URL. To tour a finished result set without any keys, seed a fixture Job:
+
+```bash
+curl -i localhost:3000/demo   # redirects to a populated, classified results page
+```
+
+Add keys to `.env` to unlock real signals, and see [Local development](#local-development) for the fast inner loop (services in Docker, app on host).
+
 ## Architecture
 
 - **NestJS** with two processes — HTTP app + BullMQ **worker** — over one module graph.
@@ -26,7 +43,7 @@ The page streams status over **Server-Sent Events**; results render grouped by e
 ## Local development
 
 ### Prerequisites
-- Node 24+ (`.nvmrc` targets 26) with `pnpm` via `corepack enable`
+- Node 24+ (`.nvmrc` pins 26) and `pnpm` 11 — install via `npm install -g pnpm@11.5.1` (corepack was removed in Node 25+)
 - Docker + Docker Compose
 
 ### Run everything in Docker

@@ -56,7 +56,13 @@ services:
 
   worker:
     build: .
-    command: pnpm worker
+    # `nest build` compiles all entries (main, worker, worker.module) together
+    # before the process runs — eliminating the `nest start --watch` race where
+    # worker.js loaded before worker.module.js was emitted (MODULE_NOT_FOUND).
+    # The until-loop restarts the worker if it ever exits, so a transient crash
+    # never strands jobs in `pending` (tsc-watch did not restart crashed children).
+    command: sh -c "pnpm exec nest build && until node dist/worker.js; do echo '[worker] exited unexpectedly; restarting in 2s'; sleep 2; done"
+    restart: unless-stopped
     environment:
       DATABASE_URL: postgres://breakbeat:breakbeat@postgres:5432/breakbeat
       REDIS_URL: redis://redis:6379
