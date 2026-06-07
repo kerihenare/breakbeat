@@ -197,8 +197,8 @@ export class PipelineService {
 				hit.domain,
 				hit.date,
 			);
-			await this.results.insertIfNew(result);
-			byId.set(id, hit);
+			const inserted = await this.results.insertIfNew(result);
+			if (inserted) byId.set(id, hit);
 		}
 		await this.events.publish(jobId);
 		return byId;

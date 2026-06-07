@@ -87,11 +87,12 @@ export class DrizzleJobRepository implements JobRepository {
 	}
 
 	async listRecent(limit: number): Promise<Job[]> {
+		const safeLimit = Math.min(Math.max(1, Math.floor(limit) || 1), 100);
 		const rows = await this.db
 			.select()
 			.from(jobs)
 			.orderBy(desc(jobs.createdAt))
-			.limit(limit);
+			.limit(safeLimit);
 		// Recent-list view doesn't need each job's warnings (avoids an N+1); the
 		// full page (findById) loads them.
 		return rows.map(

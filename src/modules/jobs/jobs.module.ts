@@ -26,8 +26,13 @@ function redisConnection(config: AppConfigService): {
 	host: string;
 	port: number;
 } {
-	const url = new URL(config.get("REDIS_URL"));
-	return { host: url.hostname, port: Number(url.port) || 6379 };
+	const raw = config.get("REDIS_URL");
+	try {
+		const url = new URL(raw);
+		return { host: url.hostname, port: Number(url.port) || 6379 };
+	} catch {
+		throw new Error(`Invalid REDIS_URL: ${JSON.stringify(raw)}`);
+	}
 }
 
 // Core bounded context: Job + Result aggregates, the submit flow, the stub

@@ -40,20 +40,27 @@ export class JobEventsController {
 		});
 		res.flushHeaders();
 
-		let closed = false;
-		const finish = async (unsub?: () => Promise<void>): Promise<void> => {
-			if (closed) return;
-			closed = true;
+		let ended = false;
+		let unsubscribe: (() => Promise<void>) | null = null;
+
+		// Single teardown path — always releases the Redis subscription, even when
+		// the stream ends from inside sendUpdate (terminal/not-found) rather than
+		// from the client disconnect.
+		const end = async (): Promise<void> => {
+			if (ended) return;
+			ended = true;
+			const unsub = unsubscribe;
+			unsubscribe = null;
 			if (unsub) await unsub();
+			if (!res.writableEnded) res.end();
 		};
 
 		const sendUpdate = async (): Promise<void> => {
-			if (closed) return;
+			if (ended) return;
 			const job = await this.jobs.findById(id);
 			if (!job) {
 				writeSse(res, "done", "1");
-				res.end();
-				closed = true;
+				await end();
 				return;
 			}
 			const results = await this.results.findAllByJob(id);
@@ -64,20 +71,18 @@ export class JobEventsController {
 			);
 			if (job.isTerminal) {
 				writeSse(res, "done", "1");
-				res.end();
-				closed = true;
+				await end();
 			}
 		};
 
-		const unsubscribe = await this.events.subscribe(id, () => {
+		unsubscribe = await this.events.subscribe(id, () => {
 			void sendUpdate();
 		});
 		req.on("close", () => {
-			void finish(unsubscribe);
+			void end();
 		});
 
 		// Emit current state immediately (covers an already-terminal job).
 		await sendUpdate();
-		if (closed) await finish(unsubscribe);
 	}
 }

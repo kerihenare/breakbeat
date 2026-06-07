@@ -22,11 +22,20 @@ export class RedisJobEvents implements JobEvents {
 		// A subscriber connection cannot issue normal commands, so use a dedicated
 		// duplicate per SSE client.
 		const sub = this.redis.duplicate();
-		await sub.subscribe(channel(jobId));
+		try {
+			await sub.subscribe(channel(jobId));
+		} catch (err) {
+			// Don't leak the duplicate connection if subscribing fails.
+			sub.disconnect();
+			throw err;
+		}
 		sub.on("message", () => onEvent());
 		return async () => {
-			await sub.unsubscribe(channel(jobId));
-			sub.disconnect();
+			try {
+				await sub.unsubscribe(channel(jobId));
+			} finally {
+				sub.disconnect();
+			}
 		};
 	}
 }

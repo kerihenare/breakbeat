@@ -8,7 +8,7 @@
 - Add deps: `@nestjs/bullmq`, `bullmq`, `nunjucks`; dev `@types/nunjucks`, `htmx.org`.
 - Vendor HTMX + its SSE ext to `public/` (copy from `node_modules/htmx.org/dist/htmx.min.js` and `ext/sse.js`); serve `public/` via `app.useStaticAssets` in `main.ts`.
 - `src/shared/view/view-renderer.ts`: `@Injectable ViewRenderer` wrapping `nunjucks.Environment` (FileSystemLoader `views/`, autoescape true) with `render(name, ctx): string`. `ViewModule` (global) provides it.
-- `views/`: `layout.njk`, `home.njk`, `job.njk`, `_job_pane.njk`, `_result_group.njk`, `_result_row.njk`, `_recent_jobs.njk`. Minimal markup; fixed content-type section order.
+- `views/`: `layout.njk`, `home.njk`, `job.njk`, `_job_live.njk`, `_job_pane.njk`, `_result_group.njk`, `_result_row.njk`, `_recent_row.njk`, `404.njk`. Minimal markup; fixed content-type section order.
 
 ## Task 2 — Ports + repo addition
 - `domain/ports/job-queue.port.ts`: `JOB_QUEUE` token + `interface JobQueue { enqueue(jobId: string): Promise<void> }`.

@@ -1,10 +1,14 @@
 {# Wrapper: the swappable pane + a one-shot SSE connector. SSE swaps only the
-   inner #job-pane, so this script is never re-run by an update. #}
+   inner #job-pane, so this script is never re-run by an update. The SSE payload
+   is our own Nunjucks fragment rendered with autoescape on (Result titles are
+   already HTML-escaped), so assigning it to innerHTML is the intended swap, not
+   untrusted input. #}
 <div id="job-pane">{% include "_job_pane.njk" %}</div>
 {% if not view.isTerminal %}
 <script>
 (function () {
-	var es = new EventSource("/jobs/{{ view.id }}/events");
+	var id = {{ view.id | dump | safe }};
+	var es = new EventSource("/jobs/" + encodeURIComponent(id) + "/events");
 	es.addEventListener("message", function (e) {
 		var pane = document.getElementById("job-pane");
 		if (pane) pane.innerHTML = e.data;
