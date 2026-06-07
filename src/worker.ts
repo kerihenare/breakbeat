@@ -11,7 +11,7 @@ async function bootstrap(): Promise<void> {
 	app.enableShutdownHooks();
 	app
 		.get(Logger)
-		.log("Breakbeat worker started (no processors yet — Slice 3)", "Worker");
+		.log("Breakbeat worker started (pipeline processor)", "Worker");
 }
 
 bootstrap().catch((err) => {

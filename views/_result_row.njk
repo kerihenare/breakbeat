@@ -1,0 +1,8 @@
+<li>
+	<a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">{{ item.title }}</a>
+	<small>
+		{{ item.sourceDomain }}
+		{% if item.publishedDate %} · {{ item.publishedDate }}{% else %} · date unknown{% endif %}
+		{% if item.confidence == "low" %} · low confidence{% endif %}
+	</small>
+</li>

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { DRIZZLE } from "../../../../shared/database/database.tokens";
 import { jobs, warnings } from "../../../../shared/database/schema";
@@ -83,6 +83,36 @@ export class DrizzleJobRepository implements JobRepository {
 				status: parseEnum(row.status, JOB_STATUSES, "job status"),
 				warnings: warningRows.map((w) => ({ message: w.message })),
 			},
+		);
+	}
+
+	async listRecent(limit: number): Promise<Job[]> {
+		const safeLimit = Math.min(Math.max(1, Math.floor(limit) || 1), 100);
+		const rows = await this.db
+			.select()
+			.from(jobs)
+			.orderBy(desc(jobs.createdAt))
+			.limit(safeLimit);
+		// Recent-list view doesn't need each job's warnings (avoids an N+1); the
+		// full page (findById) loads them.
+		return rows.map(
+			(row) =>
+				new Job(
+					row.id,
+					row.companyName,
+					row.homepageUrl,
+					{ end: row.windowEnd, start: row.windowStart },
+					row.createdAt,
+					{
+						error: row.error,
+						provenance: parseEnumOrNull(
+							row.provenance,
+							IDENTITY_PROVENANCES,
+							"provenance",
+						),
+						status: parseEnum(row.status, JOB_STATUSES, "job status"),
+					},
+				),
 		);
 	}
 }

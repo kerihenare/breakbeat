@@ -1,0 +1,45 @@
+<article>
+	<header>
+		<h1>{{ view.companyName }}</h1>
+		<p>
+			Status: <strong>{{ view.status }}</strong>
+			{% if view.provenance %} · identified via {{ view.provenance }}{% endif %}
+			· window {{ view.window.start }} → {{ view.window.end }}
+		</p>
+		<p class="counts">
+			<span>{{ view.counts.returned }} returned</span> ·
+			<span>{{ view.counts.excluded }} excluded</span> ·
+			<span>{{ view.counts.classified }} classified</span>
+		</p>
+		{% if view.error %}<p class="error">Failed: {{ view.error }}</p>{% endif %}
+		{% for w in view.warnings %}<p class="warning">⚠ {{ w }}</p>{% endfor %}
+	</header>
+
+	{% if view.groups.length == 0 and view.excluded.length == 0 %}
+		<p>No results yet…</p>
+	{% endif %}
+
+	{% for group in view.groups %}{% include "_result_group.njk" %}{% endfor %}
+
+	{% if view.excluded.length > 0 %}
+	<details class="excluded">
+		<summary>
+			Excluded
+			{% for ex in view.excluded %}· {{ ex.label }} ({{ ex.items.length }}) {% endfor %}
+		</summary>
+		{% for ex in view.excluded %}
+		<section>
+			<h4>{{ ex.label }}</h4>
+			<ul>
+				{% for item in ex.items %}
+				<li>
+					<a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">{{ item.title }}</a>
+					<small>{{ item.sourceDomain }}{% if item.exclusionDetail %} · {{ item.exclusionDetail }}{% endif %}</small>
+				</li>
+				{% endfor %}
+			</ul>
+		</section>
+		{% endfor %}
+	</details>
+	{% endif %}
+</article>

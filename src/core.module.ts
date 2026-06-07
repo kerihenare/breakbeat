@@ -4,6 +4,7 @@ import { ConfigModule } from "./shared/config/config.module";
 import { DatabaseModule } from "./shared/database/database.module";
 import { LoggingModule } from "./shared/observability/logging.module";
 import { RedisModule } from "./shared/redis/redis.module";
+import { ViewModule } from "./shared/view/view.module";
 
 // Cross-cutting infrastructure shared by both the HTTP app and the worker,
 // plus the core jobs bounded context.
@@ -13,6 +14,7 @@ import { RedisModule } from "./shared/redis/redis.module";
 		LoggingModule,
 		DatabaseModule,
 		RedisModule,
+		ViewModule,
 		JobsModule,
 	],
 	imports: [
@@ -20,6 +22,7 @@ import { RedisModule } from "./shared/redis/redis.module";
 		LoggingModule,
 		DatabaseModule,
 		RedisModule,
+		ViewModule,
 		JobsModule,
 	],
 })
