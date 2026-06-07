@@ -1,4 +1,5 @@
-import type { Exclusion } from "../exclusion";
+import type { ContentType } from "../content-type";
+import type { Confidence, Exclusion } from "../exclusion";
 import type { Result } from "../result";
 
 export const RESULT_REPOSITORY = Symbol("RESULT_REPOSITORY");
@@ -9,4 +10,9 @@ export interface ResultRepository {
 	findIncludedByJob(jobId: string): Promise<Result[]>;
 	findAllByJob(jobId: string): Promise<Result[]>;
 	markExcluded(id: string, exclusion: Exclusion): Promise<void>;
+	markClassified(
+		id: string,
+		contentType: ContentType | null,
+		confidence: Confidence,
+	): Promise<void>;
 }

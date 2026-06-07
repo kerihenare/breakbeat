@@ -1,0 +1,6 @@
+<li>
+	<a href="/jobs/{{ j.id }}" hx-get="/jobs/{{ j.id }}" hx-target="#results" hx-push-url="true">
+		{{ j.companyName }}
+	</a>
+	<span class="status">{{ j.status }}</span>
+</li>

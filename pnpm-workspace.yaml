@@ -1,3 +1,5 @@
 allowBuilds:
   '@nestjs/core': true
   esbuild: true
+  # Optional native accelerator for msgpackr (BullMQ); the pure-JS fallback is fine.
+  msgpackr-extract: false

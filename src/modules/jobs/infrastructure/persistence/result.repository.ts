@@ -4,9 +4,10 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { DRIZZLE } from "../../../../shared/database/database.tokens";
 import { results } from "../../../../shared/database/schema";
 import { parseEnum, parseEnumOrNull } from "../../../../shared/util/parse-enum";
-import { CONTENT_TYPES } from "../../domain/content-type";
+import { CONTENT_TYPES, type ContentType } from "../../domain/content-type";
 import {
 	CONFIDENCES,
+	type Confidence,
 	EXCLUSION_CODES,
 	type Exclusion,
 } from "../../domain/exclusion";
@@ -100,6 +101,17 @@ export class DrizzleResultRepository implements ResultRepository {
 				exclusionDetail: exclusion.detail,
 				status: "excluded",
 			})
+			.where(eq(results.id, id));
+	}
+
+	async markClassified(
+		id: string,
+		contentType: ContentType | null,
+		confidence: Confidence,
+	): Promise<void> {
+		await this.db
+			.update(results)
+			.set({ confidence, contentType })
 			.where(eq(results.id, id));
 	}
 }

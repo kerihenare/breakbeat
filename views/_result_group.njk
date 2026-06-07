@@ -1,0 +1,6 @@
+<section class="group">
+	<h3>{{ group.label }} ({{ group.items.length }})</h3>
+	<ul>
+		{% for item in group.items %}{% include "_result_row.njk" %}{% endfor %}
+	</ul>
+</section>

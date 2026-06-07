@@ -1,0 +1,21 @@
+{% extends "layout.njk" %}
+{% block content %}
+<section>
+	<h1>Track a company's coverage</h1>
+	<form hx-post="/jobs" hx-target="#results" hx-swap="innerHTML" method="post" action="/jobs">
+		<label>Company name <input type="text" name="companyName" placeholder="Acme" /></label>
+		<label>Homepage URL <input type="url" name="homepageUrl" placeholder="https://acme.com" /></label>
+		<button type="submit">Start search</button>
+		<p><small>Provide the URL for unambiguous results.</small></p>
+	</form>
+</section>
+
+<section id="results"></section>
+
+<section>
+	<h2>Recent jobs</h2>
+	<ul id="recent-jobs">
+		{% for j in recent %}{% include "_recent_row.njk" %}{% endfor %}
+	</ul>
+</section>
+{% endblock %}
