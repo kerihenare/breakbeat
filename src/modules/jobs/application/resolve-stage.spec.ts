@@ -50,8 +50,8 @@ describe("ResolveStage", () => {
 		expect(job.resolvedIdentity?.handles).toContain("https://x.com/acme");
 		expect(job.resolvedIdentity?.provenance).toBe("url_provided");
 		expect(job.provenance).toBe("url_provided");
-		expect(job.resolvedIdentity?.negativeMatches).toContain("Acme Foods");
-		expect(job.resolvedIdentity?.negativeMatches).not.toContain("Acme");
+		expect(job.resolvedIdentity?.negativeMatches).toContain("acmefoods.com");
+		expect(job.resolvedIdentity?.negativeMatches).not.toContain("acme.com");
 	});
 
 	it("degrades with a warning when no domain is known", async () => {
