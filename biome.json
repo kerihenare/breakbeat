@@ -34,7 +34,7 @@
 		"includes": [
 			"**",
 			"!package.json",
-			"!public/htmx.min.js",
+			"!.claude",
 			"!docs/claude-code-sessions"
 		]
 	},
@@ -45,12 +45,18 @@
 	"javascript": {
 		"formatter": {
 			"quoteStyle": "double"
+		},
+		"parser": {
+			"unsafeParameterDecoratorsEnabled": true
 		}
 	},
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true
+			"recommended": true,
+			"style": {
+				"useImportType": "off"
+			}
 		}
 	},
 	"overrides": [

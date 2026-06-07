@@ -33,7 +33,11 @@ Build a basic web app that:
 
 ## Stack
 
-Node.js v26 (`.nvmrc`) running TypeScript natively via type stripping — **erasable syntax only**: no `enum`, `namespace`, or constructor parameter properties. Express + Nunjucks (autoescape on) + HTMX polling; SQLite via built-in `node:sqlite`; Tavily for search; Claude Haiku for classification; Biome for lint/format; pnpm as package manager.
+> **Re-architecture in progress** (epic `aglow-ti2`). The new stack supersedes the v1 stack as slices land. Full doc reconciliation is Slice 9 — until then, where this section conflicts with shipped code, the code and the slice specs in `docs/superpowers/` win.
+
+**New stack (target):** Node.js (`.nvmrc` 26) with **NestJS** and **compiled** TypeScript (CommonJS, `experimentalDecorators` + `emitDecoratorMetadata`) — *not* type-stripping, so decorators and **constructor parameter properties are expected** (the v1 "erasable syntax only" rule is retired). BullMQ + Redis for background Jobs; Postgres via Drizzle/postgres.js; Server-Sent Events for live status with HTMX primary and Lit Web Components for complex widgets; Tavily (search + extract); BrandFetch (brand resolution); Claude Haiku (classification); Bugsink (errors) + VictoriaLogs (logs); Docker Compose dev env; DDD / Hexagonal / Vertical-Slice; Biome (lint/format), Jest (tests), pnpm.
+
+**v1 stack (being replaced):** Node v26 running TypeScript via type stripping (erasable syntax only: no `enum`, `namespace`, or constructor parameter properties); Express + Nunjucks (autoescape on) + HTMX polling; SQLite via `node:sqlite`; Tavily; Claude Haiku; Biome; pnpm.
 
 ## Key Documents
 
