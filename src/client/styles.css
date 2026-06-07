@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+/* Drumbeat "Clipping Desk" brand tokens (DESIGN.md). Exposed as CSS custom
+   properties so Tailwind utilities (bg-newsprint, text-ink, …) work AND the
+   values inherit through shadow DOM for the sentiment gauge. */
+@theme {
+	--color-ink: #292a2a;
+	--color-ink-soft: #3f3e3e;
+	--color-ink-deep: #0f1010;
+	--color-press-blue: #1a8cd6;
+	--color-press-blue-deep: #1071b3;
+	--color-focus-blue: #46bbff;
+	--color-page-white: #fdfdfc;
+	--color-newsprint: #efe8e3;
+	--color-newsprint-muted: #f7f3ef;
+	--color-newsprint-subtle: #f3ece7;
+	--color-card-cream: #fcfaf9;
+	--color-border-hair: #ebe0d8;
+	--color-border-muted: #d8cbc0;
+	--color-text-muted: #5c5959;
+	--color-text-dimmed: #6f6b6b;
+	--color-live-green: #25b566;
+	--color-live-green-surface: #bbf5d7;
+	--color-alert-coral: #e85a68;
+	--color-alert-coral-surface: #fec2c8;
+	--color-aether-gold: #f0be0a;
+
+	--font-sans: "FK Grotesk", system-ui, -apple-system, "Segoe UI", Roboto,
+		"Helvetica Neue", sans-serif;
+	--font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+	--radius-sm: 4px;
+	--radius-md: 6px;
+	--radius-lg: 8px;
+	--radius-xl: 12px;
+}
+
+@layer base {
+	body {
+		background-color: var(--color-newsprint);
+		color: var(--color-ink);
+		font-family: var(--font-sans);
+		line-height: 1.5;
+	}
+	a {
+		color: var(--color-press-blue);
+	}
+	a:hover {
+		color: var(--color-press-blue-deep);
+	}
+	:focus-visible {
+		outline: 2px solid var(--color-focus-blue);
+		outline-offset: 2px;
+	}
+	.mono {
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		color: var(--color-text-muted);
+	}
+}
+
+@layer components {
+	/* Status chip (bb-job-status, light DOM) */
+	.bb-status {
+		display: inline-block;
+		padding: 2px 10px;
+		border-radius: 9999px;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		background: var(--color-newsprint-subtle);
+		color: var(--color-ink);
+		border: 1px solid var(--color-border-hair);
+	}
+	.bb-status.status-done {
+		background: var(--color-live-green-surface);
+	}
+	.bb-status.status-done_with_warnings,
+	.bb-status.status-failed {
+		background: var(--color-alert-coral-surface);
+	}
+	.bb-status.is-running {
+		color: var(--color-press-blue-deep);
+		animation: bb-pulse 1.4s ease-in-out infinite;
+	}
+	@keyframes bb-pulse {
+		50% {
+			opacity: 0.55;
+		}
+	}
+
+	/* Filter tabs (bb-result-filter, light DOM) */
+	.bb-filter button {
+		font: inherit;
+		font-size: 0.875rem;
+		padding: 4px 10px;
+		margin-right: 4px;
+		border-radius: var(--radius-md);
+		border: 1px solid transparent;
+		background: transparent;
+		color: var(--color-text-muted);
+		cursor: pointer;
+	}
+	.bb-filter button:hover {
+		background: var(--color-newsprint-subtle);
+	}
+	.bb-filter button.is-active {
+		color: var(--color-press-blue-deep);
+		border-color: var(--color-press-blue);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.bb-status.is-running {
+			animation: none;
+		}
+	}
+}

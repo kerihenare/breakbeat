@@ -147,3 +147,7 @@ data/
 test-output.txt
 
 .DS_Store
+
+# Client build artifacts (rebuilt by pnpm build:client)
+public/app.css
+public/components.js

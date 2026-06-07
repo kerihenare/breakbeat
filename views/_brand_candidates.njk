@@ -1,15 +1,17 @@
-<section id="brand-candidates">
-	<h2>Which "{{ companyName }}"?</h2>
-	<p><small>Pick the brand you mean, or refine your search.</small></p>
-	<ul>
+<section id="brand-candidates" class="max-w-xl">
+	<h2 class="text-lg font-semibold m-0">Which "{{ companyName }}"?</h2>
+	<p class="text-text-muted text-sm mt-1 mb-3">Pick the brand you mean.</p>
+	<ul class="list-none p-0 m-0 grid gap-2">
 		{% for c in candidates %}
 		<li>
 			<form hx-post="/jobs/select" hx-target="#results" hx-swap="innerHTML" method="post" action="/jobs/select">
 				<input type="hidden" name="companyName" value="{{ c.name }}" />
 				<input type="hidden" name="domain" value="{{ c.domain }}" />
-				<button type="submit">
-					{% if c.iconUrl %}<img src="{{ c.iconUrl }}" alt="" width="20" height="20" />{% endif %}
-					{{ c.name }} — <span class="mono">{{ c.domain }}</span>
+				<button type="submit"
+					class="w-full text-left bg-card-cream border border-border-hair rounded-lg px-3 py-2 hover:bg-newsprint-subtle cursor-pointer flex items-center gap-2">
+					{% if c.iconUrl %}<img src="{{ c.iconUrl }}" alt="" width="20" height="20" class="rounded" />{% endif %}
+					<span class="font-medium">{{ c.name }}</span>
+					<span class="mono">{{ c.domain }}</span>
 				</button>
 			</form>
 		</li>

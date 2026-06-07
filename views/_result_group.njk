@@ -1,6 +1,6 @@
-<section class="group">
-	<h3>{{ group.label }} ({{ group.items.length }})</h3>
-	<ul>
+<section class="result-group mb-5" data-filter-type="{{ group.key }}">
+	<h3 class="text-base font-semibold m-0 mb-2">{{ group.label }} <span class="text-text-muted font-normal">({{ group.items.length }})</span></h3>
+	<ul class="list-none p-0 m-0 grid gap-2">
 		{% for item in group.items %}{% include "_result_row.njk" %}{% endfor %}
 	</ul>
 </section>

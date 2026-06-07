@@ -33,6 +33,7 @@ import {
 } from "./infrastructure/queue/bullmq-job-queue";
 import { TavilyExtractor } from "./infrastructure/tavily/tavily-extractor";
 import { TavilySearch } from "./infrastructure/tavily/tavily-search";
+import { DemoController } from "./interface/demo.controller";
 import { JobEventsController } from "./interface/job-events.controller";
 import { JobsController } from "./interface/jobs.controller";
 
@@ -53,7 +54,7 @@ function redisConnection(config: AppConfigService): {
 // pipeline, and the HTTP delivery. Domain ports → Postgres/Redis/BullMQ
 // adapters. The BullMQ @Processor is provided only in WorkerModule.
 @Module({
-	controllers: [JobsController, JobEventsController],
+	controllers: [JobsController, JobEventsController, DemoController],
 	exports: [
 		CLOCK,
 		ID_GENERATOR,

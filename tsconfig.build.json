@@ -4,7 +4,8 @@
 		"dist",
 		"**/*.spec.ts",
 		"test",
-		"drizzle.config.ts"
+		"drizzle.config.ts",
+		"src/client"
 	],
 	"extends": "./tsconfig.json"
 }

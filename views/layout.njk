@@ -4,10 +4,15 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>{% block title %}Breakbeat{% endblock %}</title>
+		<link rel="stylesheet" href="/app.css" />
+		<script type="module" src="/components.js"></script>
 		<script src="/htmx.min.js" defer></script>
 	</head>
-	<body>
-		<header><a href="/"><strong>Breakbeat</strong></a> — third-party content tracker</header>
+	<body class="min-h-screen">
+		<header class="border-b border-border-hair px-6 py-3 flex items-baseline gap-3">
+			<a href="/" class="text-ink no-underline font-semibold text-lg">Breakbeat</a>
+			<span class="text-text-muted text-sm">third-party content tracker</span>
+		</header>
 		<main>{% block content %}{% endblock %}</main>
 	</body>
 </html>
