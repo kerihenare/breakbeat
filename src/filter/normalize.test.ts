@@ -285,6 +285,10 @@ describe("normalizeHandle", () => {
 	it("strips trailing slash on path", () => {
 		assert.equal(normalizeHandle("https://x.com/acme/"), "x.com/acme");
 	});
+
+	it("falls back to trimmed lowercase for unparseable input", () => {
+		assert.equal(normalizeHandle("  Not A Url  "), "not a url");
+	});
 });
 
 describe("matchesHandlePrefix", () => {

@@ -21,7 +21,7 @@ if (missing.length > 0) {
 // ─── App setup ────────────────────────────────────────────────────────────────
 
 const app = express();
-const PORT = Number(process.env.PORT ?? 3000);
+const PORT = Number(process.env.PORT) || 3000;
 
 // ─── Nunjucks ─────────────────────────────────────────────────────────────────
 
@@ -45,7 +45,8 @@ nunjucksEnv.addFilter(
 	(arr: unknown[], attr: string, value: unknown) => {
 		if (!Array.isArray(arr)) return [];
 		return arr.filter(
-			(item) => (item as Record<string, unknown>)[attr] === value,
+			(item) =>
+				item != null && (item as Record<string, unknown>)[attr] === value,
 		);
 	},
 );
@@ -62,7 +63,8 @@ nunjucksEnv.addFilter(
 	(arr: unknown[], attr: string, value: unknown) => {
 		if (!Array.isArray(arr)) return [];
 		return arr.filter(
-			(item) => (item as Record<string, unknown>)[attr] !== value,
+			(item) =>
+				item != null && (item as Record<string, unknown>)[attr] !== value,
 		);
 	},
 );

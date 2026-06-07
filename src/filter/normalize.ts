@@ -154,7 +154,13 @@ export function normalizeHandle(raw: string): string {
 		toParse = `https://${toParse}`;
 	}
 
-	const parsed = new URL(toParse);
+	let parsed: URL;
+	try {
+		parsed = new URL(toParse);
+	} catch {
+		// Not a parseable URL — return trimmed lowercase as-is
+		return raw.trim().toLowerCase();
+	}
 
 	// Lowercase host, strip www.
 	let host = parsed.hostname.toLowerCase();

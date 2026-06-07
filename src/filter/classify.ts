@@ -147,25 +147,33 @@ ${resultLines}`;
 // ─── validateResultIds ────────────────────────────────────────────────────────
 
 /**
- * Pure function — returns only the items from `received` whose ids are in `sent`.
- * Items with unrecognized IDs are silently discarded (caller adds warning if needed).
+ * Pure function — reconciles the IDs we sent against the IDs we got back.
+ * The schema can't enforce that the model echoes our IDs, so this thin sanity
+ * layer does: it keeps only recognized items (first occurrence wins on dups),
+ * and reports both `rogue` IDs (returned but never sent) and `missing` IDs
+ * (sent but never returned — those results would otherwise stay unclassified
+ * with no trace). Callers add warnings as needed.
  *
  * Exported for testing.
  */
 export function validateResultIds(
 	sent: Set<number>,
 	received: ClassifyResultItem[],
-): { valid: ClassifyResultItem[]; rogue: number[] } {
+): { valid: ClassifyResultItem[]; rogue: number[]; missing: number[] } {
 	const valid: ClassifyResultItem[] = [];
 	const rogue: number[] = [];
+	const seen = new Set<number>();
 	for (const item of received) {
-		if (sent.has(item.id)) {
-			valid.push(item);
-		} else {
+		if (!sent.has(item.id)) {
 			rogue.push(item.id);
+		} else if (!seen.has(item.id)) {
+			seen.add(item.id);
+			valid.push(item);
 		}
+		// Duplicate of an already-accepted id → ignore (first occurrence wins).
 	}
-	return { rogue, valid };
+	const missing = [...sent].filter((id) => !seen.has(id));
+	return { missing, rogue, valid };
 }
 
 // ─── callModel ────────────────────────────────────────────────────────────────
@@ -221,13 +229,21 @@ function applyChunkResults(
 	sentIds: Set<number>,
 	items: ClassifyResultItem[],
 ): void {
-	const { valid, rogue } = validateResultIds(sentIds, items);
+	const { valid, rogue, missing } = validateResultIds(sentIds, items);
 
 	if (rogue.length > 0) {
 		addWarning(
 			db,
 			jobId,
 			`classification returned ${rogue.length} unrecognized result ID(s): ${rogue.join(", ")} — discarded`,
+		);
+	}
+
+	if (missing.length > 0) {
+		addWarning(
+			db,
+			jobId,
+			`classification omitted ${missing.length} result ID(s): ${missing.join(", ")} — left unclassified`,
 		);
 	}
 
@@ -269,8 +285,9 @@ export async function classify(
 	jobId: number,
 	identity: ResolvedIdentity,
 ): Promise<void> {
-	// Step 1: SELECT included results up to cap
-	const rows = db
+	// Step 1: SELECT included results, fetching one past the cap so we can
+	// detect (and report) overflow rather than silently truncating recall.
+	const fetched = db
 		.prepare(
 			`SELECT id, title, snippet, url, source_domain
 			 FROM results
@@ -278,11 +295,22 @@ export async function classify(
 			 ORDER BY id
 			 LIMIT ?`,
 		)
-		.all(jobId, CLASSIFY_CAP) as ResultRow[];
+		.all(jobId, CLASSIFY_CAP + 1) as ResultRow[];
 
-	if (rows.length === 0) {
+	if (fetched.length === 0) {
 		// Nothing to classify — not a warning, just a no-op
 		return;
+	}
+
+	// Caps bound runaway failure, never recall — so hitting one is abnormal
+	// and self-reports via done_with_warnings rather than dropping rows silently.
+	const rows = fetched.slice(0, CLASSIFY_CAP);
+	if (fetched.length > CLASSIFY_CAP) {
+		addWarning(
+			db,
+			jobId,
+			`classify cap reached: ${CLASSIFY_CAP} of more included results classified — remainder left unclassified`,
+		);
 	}
 
 	// Step 2: Chunk into groups of CLASSIFY_CHUNK_SIZE
