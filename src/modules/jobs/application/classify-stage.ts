@@ -88,6 +88,7 @@ export class ClassifyStage {
 
 		let failedChunks = 0;
 		const classifiedIds = new Set<string>();
+		const writes: Promise<void>[] = [];
 		for (const outcome of outcomes) {
 			if (outcome.status === "rejected") {
 				failedChunks++;
@@ -95,16 +96,15 @@ export class ClassifyStage {
 			}
 			for (const v of outcome.value as ClassifyVerdict[]) {
 				classifiedIds.add(v.id);
-				if (v.exclude !== "none") {
-					await this.results.markExcluded(v.id, {
-						code: v.exclude,
-						detail: "LLM",
-					});
-				} else {
-					await this.results.markClassified(v.id, v.contentType, v.confidence);
-				}
+				writes.push(
+					v.exclude !== "none"
+						? this.results.markExcluded(v.id, { code: v.exclude, detail: "LLM" })
+						: this.results.markClassified(v.id, v.contentType, v.confidence),
+				);
 			}
 		}
+		// Persist concurrently — the postgres.js pool bounds real parallelism.
+		await Promise.all(writes);
 
 		const missing = inputs.filter((i) => !classifiedIds.has(i.id)).length;
 		if (failedChunks > 0) {
