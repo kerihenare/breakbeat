@@ -1,5 +1,6 @@
 import {
 	index,
+	jsonb,
 	pgTable,
 	text,
 	timestamp,
@@ -10,14 +11,20 @@ import {
 // Domain persistence schema (Slice 2). Replaces the Slice-1 app_meta baseline.
 
 export const jobs = pgTable("jobs", {
+	// Resolved Identity (Slice 4) — nullable until the Resolve stage runs.
+	chosenDomain: text("chosen_domain"),
 	companyName: text("company_name").notNull(),
+	contextNote: text("context_note"),
 	createdAt: timestamp("created_at", { withTimezone: true })
 		.notNull()
 		.defaultNow(),
 	error: text("error"),
 	homepageUrl: text("homepage_url"),
 	id: uuid("id").primaryKey(),
+	negativeMatches: jsonb("negative_matches").$type<string[]>(),
 	provenance: text("provenance"),
+	resolvedDomains: jsonb("resolved_domains").$type<string[]>(),
+	resolvedHandles: jsonb("resolved_handles").$type<string[]>(),
 	status: text("status").notNull().default("pending"),
 	windowEnd: text("window_end").notNull(),
 	windowStart: text("window_start").notNull(),

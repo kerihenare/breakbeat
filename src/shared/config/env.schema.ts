@@ -8,6 +8,8 @@ const schema = z.object({
 	BRANDFETCH_API_KEY: z.string().min(1).optional(),
 	BRANDFETCH_CLIENT_ID: z.string().min(1).optional(),
 	DATABASE_URL: urlString,
+	GOOGLE_API_KEY: z.string().min(1).optional(),
+	GOOGLE_CX: z.string().min(1).optional(),
 	NODE_ENV: z
 		.enum(["development", "test", "production"])
 		.default("development"),
@@ -25,6 +27,8 @@ const OPTIONAL_INTEGRATIONS: (keyof Env)[] = [
 	"TAVILY_API_KEY",
 	"BRANDFETCH_API_KEY",
 	"BRANDFETCH_CLIENT_ID",
+	"GOOGLE_API_KEY",
+	"GOOGLE_CX",
 	"SENTRY_DSN",
 	"VICTORIALOGS_URL",
 ];

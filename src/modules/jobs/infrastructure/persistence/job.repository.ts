@@ -17,12 +17,17 @@ export class DrizzleJobRepository implements JobRepository {
 	async save(job: Job): Promise<void> {
 		await this.db.transaction(async (tx) => {
 			const row = {
+				chosenDomain: job.chosenDomain,
 				companyName: job.companyName,
+				contextNote: job.contextNote,
 				createdAt: job.createdAt,
 				error: job.error,
 				homepageUrl: job.homepageUrl,
 				id: job.id,
+				negativeMatches: job.resolvedIdentity?.negativeMatches ?? null,
 				provenance: job.provenance,
+				resolvedDomains: job.resolvedIdentity?.domains ?? null,
+				resolvedHandles: job.resolvedIdentity?.handles ?? null,
 				status: job.status,
 				windowEnd: job.window.end,
 				windowStart: job.window.start,
@@ -32,10 +37,15 @@ export class DrizzleJobRepository implements JobRepository {
 				.values(row)
 				.onConflictDoUpdate({
 					set: {
+						chosenDomain: row.chosenDomain,
 						companyName: row.companyName,
+						contextNote: row.contextNote,
 						error: row.error,
 						homepageUrl: row.homepageUrl,
+						negativeMatches: row.negativeMatches,
 						provenance: row.provenance,
+						resolvedDomains: row.resolvedDomains,
+						resolvedHandles: row.resolvedHandles,
 						status: row.status,
 						windowEnd: row.windowEnd,
 						windowStart: row.windowStart,
@@ -74,12 +84,30 @@ export class DrizzleJobRepository implements JobRepository {
 			{ end: row.windowEnd, start: row.windowStart },
 			row.createdAt,
 			{
+				chosenDomain: row.chosenDomain,
+				contextNote: row.contextNote,
 				error: row.error,
 				provenance: parseEnumOrNull(
 					row.provenance,
 					IDENTITY_PROVENANCES,
 					"provenance",
 				),
+				resolvedIdentity:
+					row.resolvedDomains !== null
+						? {
+								domains: row.resolvedDomains,
+								handles: row.resolvedHandles ?? [],
+								name: row.companyName,
+								negativeMatches: row.negativeMatches ?? [],
+								provenance:
+									parseEnumOrNull(
+										row.provenance,
+										IDENTITY_PROVENANCES,
+										"provenance",
+									) ?? "none",
+								window: { end: row.windowEnd, start: row.windowStart },
+							}
+						: null,
 				status: parseEnum(row.status, JOB_STATUSES, "job status"),
 				warnings: warningRows.map((w) => ({ message: w.message })),
 			},

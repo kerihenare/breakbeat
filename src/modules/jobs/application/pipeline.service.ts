@@ -18,6 +18,7 @@ import {
 } from "../domain/ports/result-repository.port";
 import { Result } from "../domain/result";
 import { normalizeUrl } from "../domain/services/normalize";
+import { ResolveStage } from "./resolve-stage";
 
 type StubHit = {
 	title: string;
@@ -148,6 +149,7 @@ export class PipelineService {
 		@Inject(RESULT_REPOSITORY) private readonly results: ResultRepository,
 		@Inject(JOB_EVENTS) private readonly events: JobEvents,
 		@Inject(ID_GENERATOR) private readonly ids: IdGenerator,
+		private readonly resolve: ResolveStage,
 	) {}
 
 	async run(jobId: string): Promise<void> {
@@ -157,7 +159,14 @@ export class PipelineService {
 			return;
 		}
 		try {
-			await this.advance(job, "resolving");
+			// Real Resolve (Slice 4). Search/Filter/Classify remain stubbed.
+			job.transitionTo("resolving");
+			await this.jobs.save(job);
+			await this.events.publish(job.id);
+			await this.resolve.run(job);
+			await this.jobs.save(job);
+			await this.events.publish(job.id);
+			await delay(STAGE_DELAY_MS);
 			await this.advance(job, "searching");
 			const ids = await this.insertStubResults(job.id);
 			await this.advance(job, "filtering");
