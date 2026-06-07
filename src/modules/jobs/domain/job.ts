@@ -1,5 +1,5 @@
 import { assertTransition, isTerminal, type JobStatus } from "./job-status";
-import type { IdentityProvenance } from "./resolved-identity";
+import type { IdentityProvenance, ResolvedIdentity } from "./resolved-identity";
 import type { Warning } from "./warning";
 import type { SearchWindow } from "./window";
 
@@ -8,6 +8,9 @@ type JobState = {
 	provenance?: IdentityProvenance | null;
 	warnings?: Warning[];
 	error?: string | null;
+	chosenDomain?: string | null;
+	resolvedIdentity?: ResolvedIdentity | null;
+	contextNote?: string | null;
 };
 
 /**
@@ -19,6 +22,9 @@ export class Job {
 	status: JobStatus;
 	provenance: IdentityProvenance | null;
 	error: string | null;
+	chosenDomain: string | null;
+	resolvedIdentity: ResolvedIdentity | null;
+	contextNote: string | null;
 	private readonly _warnings: Warning[];
 
 	constructor(
@@ -32,7 +38,16 @@ export class Job {
 		this.status = state.status ?? "pending";
 		this.provenance = state.provenance ?? null;
 		this.error = state.error ?? null;
+		this.chosenDomain = state.chosenDomain ?? null;
+		this.resolvedIdentity = state.resolvedIdentity ?? null;
+		this.contextNote = state.contextNote ?? null;
 		this._warnings = state.warnings ? [...state.warnings] : [];
+	}
+
+	/** Record the Resolved Identity produced by the Resolve stage. */
+	attachResolvedIdentity(identity: ResolvedIdentity): void {
+		this.resolvedIdentity = identity;
+		this.provenance = identity.provenance;
 	}
 
 	get warnings(): readonly Warning[] {

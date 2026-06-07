@@ -16,6 +16,7 @@ import { computeWindow } from "../domain/window";
 export type SubmitJobInput = {
 	companyName: string;
 	homepageUrl: string | null;
+	chosenDomain?: string | null;
 };
 
 @Injectable()
@@ -48,12 +49,15 @@ export class SubmitJob {
 
 		const now = this.clock.now();
 		const displayName = name || (url ? normalizeHost(url) : "");
+		const chosenDomain =
+			input.chosenDomain?.trim() || (url ? normalizeHost(url) : null);
 		const job = new Job(
 			this.ids.next(),
 			displayName,
 			url,
 			computeWindow(now),
 			now,
+			{ chosenDomain },
 		);
 
 		await this.jobs.save(job);
