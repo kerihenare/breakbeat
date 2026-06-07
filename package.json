@@ -33,6 +33,7 @@
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/terminus": "^11.0.0",
     "@sentry/nestjs": "^9.0.0",
+    "@tavily/core": "^0.7.5",
     "bullmq": "^5.78.0",
     "drizzle-orm": "^0.38.0",
     "ioredis": "^5.4.0",

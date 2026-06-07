@@ -92,10 +92,12 @@ export class ResolveStage {
 		companyName: string,
 		chosenDomain: string | null,
 	): Promise<string[]> {
+		// Domains (not names) — the Search stage excludes these, and the Classify
+		// stage uses them as negative context.
 		const candidates = await this.brands.search(companyName);
-		const names = candidates
+		const domains = candidates
 			.filter((c) => c.domain !== chosenDomain)
-			.map((c) => c.name);
-		return [...new Set(names)];
+			.map((c) => c.domain);
+		return [...new Set(domains)];
 	}
 }

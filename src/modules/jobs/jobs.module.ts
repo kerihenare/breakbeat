@@ -4,6 +4,7 @@ import { AppConfigService } from "../../shared/config/app-config.service";
 import { ConfigModule } from "../../shared/config/config.module";
 import { PipelineService } from "./application/pipeline.service";
 import { ResolveStage } from "./application/resolve-stage";
+import { SearchStage } from "./application/search-stage";
 import { SubmitJob } from "./application/submit-job.use-case";
 import { BRAND_DIRECTORY } from "./domain/ports/brand-directory.port";
 import { CLOCK } from "./domain/ports/clock.port";
@@ -12,6 +13,7 @@ import { JOB_EVENTS } from "./domain/ports/job-events.port";
 import { JOB_QUEUE } from "./domain/ports/job-queue.port";
 import { JOB_REPOSITORY } from "./domain/ports/job-repository.port";
 import { RESULT_REPOSITORY } from "./domain/ports/result-repository.port";
+import { SEARCH_PROVIDER } from "./domain/ports/search-provider.port";
 import { WEB_CONTEXT } from "./domain/ports/web-context.port";
 import { BrandfetchClient } from "./infrastructure/brandfetch/brandfetch-client";
 import { SystemClock } from "./infrastructure/clock";
@@ -24,6 +26,7 @@ import {
 	BullmqJobQueue,
 	PIPELINE_QUEUE,
 } from "./infrastructure/queue/bullmq-job-queue";
+import { TavilySearch } from "./infrastructure/tavily/tavily-search";
 import { JobEventsController } from "./interface/job-events.controller";
 import { JobsController } from "./interface/jobs.controller";
 
@@ -73,8 +76,10 @@ function redisConnection(config: AppConfigService): {
 		{ provide: JOB_EVENTS, useClass: RedisJobEvents },
 		{ provide: BRAND_DIRECTORY, useClass: BrandfetchClient },
 		{ provide: WEB_CONTEXT, useClass: GoogleContext },
+		{ provide: SEARCH_PROVIDER, useClass: TavilySearch },
 		SubmitJob,
 		ResolveStage,
+		SearchStage,
 		PipelineService,
 	],
 })
