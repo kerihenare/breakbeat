@@ -47,6 +47,7 @@ export class TavilySearch implements SearchProvider {
 			hits.push({
 				content: hit.content ?? null,
 				publishedDate: hit.publishedDate || null,
+				score: hit.score ?? null,
 				sourceDomain: hostOf(hit.url),
 				title: hit.title ?? "",
 				url: hit.url,

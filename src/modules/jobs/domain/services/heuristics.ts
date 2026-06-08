@@ -19,6 +19,11 @@ export const AGGREGATOR_BLOCKLIST: readonly string[] = [
 	"feedly.com",
 	"news.google.com",
 	"apple.news",
+	// Data-aggregator company-profile sites — directory entries, not coverage.
+	"crunchbase.com",
+	"pitchbook.com",
+	"dealroom.co",
+	"tracxn.com",
 ];
 
 /** Review/comparison site domains — excluded as ecommerce_review. */

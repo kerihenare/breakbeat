@@ -71,6 +71,20 @@ describe("heuristicExclusion", () => {
 		).toBe("aggregator");
 	});
 
+	it("excludes data-aggregator profile sites as aggregator", () => {
+		for (const sourceDomain of [
+			"crunchbase.com",
+			"pitchbook.com",
+			"dealroom.co",
+			"tracxn.com",
+		]) {
+			expect(
+				heuristicExclusion(input({ sourceDomain }), identity, windowStart)
+					?.code,
+			).toBe("aggregator");
+		}
+	});
+
 	it("excludes review domains, ecommerce paths, and ecommerce titles", () => {
 		expect(
 			heuristicExclusion(

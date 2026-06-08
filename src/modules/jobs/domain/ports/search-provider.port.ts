@@ -8,6 +8,8 @@ export type SearchHit = {
 	content: string | null;
 	sourceDomain: string;
 	publishedDate: string | null;
+	/** Provider relevance score (Tavily 0–1); null when absent. */
+	score: number | null;
 };
 
 export interface SearchProvider {

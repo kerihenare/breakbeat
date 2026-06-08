@@ -48,10 +48,31 @@ function hostOf(handleUrl: string): string | null {
 }
 
 /**
+ * Hosts shared by many entities, where a company occupies a path rather than
+ * the whole host. Never excluded wholesale at search time — that would drop
+ * third-party coverage on the platform; the company's own profile is removed
+ * later by the matchesHandlePrefix own_channel filter (path-level).
+ */
+const SHARED_PLATFORM_HOSTS: ReadonlySet<string> = new Set([
+	"linkedin.com",
+	"instagram.com",
+	"facebook.com",
+	"x.com",
+	"twitter.com",
+	"youtube.com",
+	"tiktok.com",
+	"medium.com",
+	"substack.com",
+	"threads.net",
+]);
+
+/**
  * The full Tavily-bound query set for a Job: 7 per-content-type + 6 time-sliced
  * (news/press release × 3 slices) + 5 angle queries = 18. Pure (ported from v1).
- * excludeDomains = own domains + own-social hosts + aggregator blocklist +
- * negative-match company domains (deduped, order-preserved).
+ * excludeDomains = own domains + dedicated (non-shared-platform) handle hosts +
+ * aggregator blocklist + negative-match company domains (deduped,
+ * order-preserved). Own profiles on shared platforms are dropped later by the
+ * matchesHandlePrefix own_channel filter, not here.
  */
 export function buildSearchQueries(identity: ResolvedIdentity): SearchQuery[] {
 	const { name, window } = identity;
@@ -60,7 +81,9 @@ export function buildSearchQueries(identity: ResolvedIdentity): SearchQuery[] {
 
 	const excludeRaw = [
 		...identity.domains,
-		...identity.handles.map(hostOf).filter((d): d is string => d !== null),
+		...identity.handles
+			.map(hostOf)
+			.filter((d): d is string => d !== null && !SHARED_PLATFORM_HOSTS.has(d)),
 		...AGGREGATOR_BLOCKLIST,
 		...identity.negativeMatches,
 	];

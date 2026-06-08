@@ -33,6 +33,7 @@ describe("buildJobView sentiment", () => {
 			"x",
 			"2025-01-01",
 			null,
+			null,
 			{ confidence: "high", contentType: "news" },
 		);
 		const excluded = new Result(
@@ -43,6 +44,7 @@ describe("buildJobView sentiment", () => {
 			"T2",
 			"x",
 			"2025-01-01",
+			null,
 			null,
 			{ exclusion: { code: "aggregator", detail: null }, status: "excluded" },
 		);

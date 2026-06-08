@@ -21,6 +21,13 @@
 			"tag": "0002_glorious_sharon_carter",
 			"version": "7",
 			"when": 1780868361458
+		},
+		{
+			"breakpoints": true,
+			"idx": 3,
+			"tag": "0003_adorable_secret_warriors",
+			"version": "7",
+			"when": 1780880409396
 		}
 	],
 	"version": "7"

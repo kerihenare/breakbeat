@@ -156,6 +156,7 @@ export function buildDemoJob(
 					hit.domain,
 					hit.date,
 					null,
+					null,
 					{
 						exclusion: { code: hit.exclude.code, detail: hit.exclude.detail },
 						status: "excluded",
@@ -169,6 +170,7 @@ export function buildDemoJob(
 					hit.title,
 					hit.domain,
 					hit.date,
+					null,
 					null,
 					{
 						confidence: "high",

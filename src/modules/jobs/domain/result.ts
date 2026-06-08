@@ -49,6 +49,9 @@ export class Result {
 		readonly sourceDomain: string,
 		readonly publishedDate: string | null,
 		readonly snippet: string | null = null,
+		// Provider relevance score (Tavily 0–1); null when absent. Search-origin,
+		// immutable — available for ranking/Collapse, not a status transition.
+		readonly score: number | null = null,
 		state: ResultState = {},
 	) {
 		this.status = state.status ?? "included";

@@ -52,6 +52,7 @@ function repoStub(): { repo: ResultRepository; inserted: string[] } {
 const hit = (url: string): SearchHit => ({
 	content: null,
 	publishedDate: null,
+	score: null,
 	sourceDomain: "x",
 	title: "t",
 	url,

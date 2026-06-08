@@ -38,12 +38,26 @@ describe("buildSearchQueries", () => {
 		expect(starts).toContain("2025-06-08");
 	});
 
-	it("excludes own domains, own-social hosts, aggregators, and negative-match domains (deduped)", () => {
+	it("excludes own domains, aggregators, and negative-match domains (deduped)", () => {
 		const ex = queries[0].options.excludeDomains;
 		expect(ex).toContain("acme.com");
-		expect(ex).toContain("x.com"); // from the social handle
 		expect(ex).toContain("reddit.com"); // aggregator blocklist
 		expect(ex).toContain("acmefoods.com"); // negative match
 		expect(new Set(ex).size).toBe(ex.length); // deduped
+	});
+
+	it("does NOT exclude shared social-platform hosts from a handle", () => {
+		// Excluding x.com wholesale would drop third-party coverage on the
+		// platform; the own profile is removed later by matchesHandlePrefix.
+		const ex = queries[0].options.excludeDomains;
+		expect(ex).not.toContain("x.com");
+	});
+
+	it("excludes a dedicated (subdomain) handle host wholesale", () => {
+		const ex = buildSearchQueries({
+			...identity,
+			handles: ["https://acme.substack.com"],
+		})[0].options.excludeDomains;
+		expect(ex).toContain("acme.substack.com");
 	});
 });

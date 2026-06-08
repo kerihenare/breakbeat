@@ -146,6 +146,9 @@ vite.config.ts.timestamp-*
 data/
 test-output.txt
 
+# Drizzle migration SQL must be versioned (overrides a global *.sql ignore).
+!migrations/*.sql
+
 .DS_Store
 
 # Client build artifacts (rebuilt by pnpm build:client)
