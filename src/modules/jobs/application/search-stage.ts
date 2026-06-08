@@ -10,24 +10,29 @@ import {
 } from "../domain/ports/result-repository.port";
 import {
 	SEARCH_PROVIDER,
+	type SearchHit,
 	type SearchProvider,
 } from "../domain/ports/search-provider.port";
+import {
+	WEB_SEARCH_BACKSTOP,
+	type WebSearchBackstop,
+} from "../domain/ports/web-search-backstop.port";
 import { Result } from "../domain/result";
 import { normalizeUrl } from "../domain/services/normalize";
-import { buildSearchQueries } from "../domain/services/search-queries";
+import {
+	buildBackstopQueries,
+	buildEscalationQueries,
+	buildSearchQueries,
+	TAVILY_THIN_THRESHOLD,
+} from "../domain/services/search-queries";
 
-/**
- * Real Search: fan out the Tavily query set built from the Resolved Identity,
- * insert each hit with insert-time URL dedup. A partial failure is a Warning;
- * an all-fail (when configured) fails the Job. Unconfigured degrades to a
- * Warning and zero results.
- */
 @Injectable()
 export class SearchStage {
 	private readonly logger = new Logger(SearchStage.name);
 
 	constructor(
 		@Inject(SEARCH_PROVIDER) private readonly provider: SearchProvider,
+		@Inject(WEB_SEARCH_BACKSTOP) private readonly backstop: WebSearchBackstop,
 		@Inject(RESULT_REPOSITORY) private readonly results: ResultRepository,
 		@Inject(ID_GENERATOR) private readonly ids: IdGenerator,
 	) {}
@@ -38,55 +43,108 @@ export class SearchStage {
 			job.addWarning("search skipped — no resolved identity");
 			return;
 		}
-		if (!this.provider.isConfigured()) {
+		const tavilyOn = this.provider.isConfigured();
+		const backstopOn = this.backstop.isConfigured();
+		if (!tavilyOn && !backstopOn) {
 			job.addWarning("search not configured — no results fetched");
 			return;
 		}
 
-		const queries = buildSearchQueries(identity);
-		const outcomes = await Promise.allSettled(
-			queries.map((q) => this.provider.search(q)),
+		const tavilyQueries = buildSearchQueries(identity);
+		const backstopQueries = buildBackstopQueries(identity);
+
+		const [tavily, backstopDefault] = await Promise.all([
+			tavilyOn
+				? Promise.allSettled(tavilyQueries.map((q) => this.provider.search(q)))
+				: Promise.resolve([] as PromiseSettledResult<SearchHit[]>[]),
+			backstopOn
+				? Promise.allSettled(
+						backstopQueries.map((q) => this.backstop.search(q)),
+					)
+				: Promise.resolve([] as PromiseSettledResult<SearchHit[]>[]),
+		]);
+
+		const tavily_ = this.tally(tavily);
+		const backstop_ = this.tally(backstopDefault);
+		let inserted =
+			(await this.insertAll(job, tavily_.hits)) +
+			(await this.insertAll(job, backstop_.hits));
+		let anySucceeded = tavily_.succeeded > 0 || backstop_.succeeded > 0;
+
+		if (backstopOn && tavily_.hitCount < TAVILY_THIN_THRESHOLD) {
+			const escalated = this.tally(
+				await Promise.allSettled(
+					buildEscalationQueries(identity).map((q) => this.backstop.search(q)),
+				),
+			);
+			inserted += await this.insertAll(job, escalated.hits);
+			anySucceeded = anySucceeded || escalated.succeeded > 0;
+			this.logger.log(
+				`search ${job.id}: escalated backstop (${escalated.succeeded} ok)`,
+			);
+		}
+
+		if (tavilyOn && tavily_.failed > 0) {
+			job.addWarning(
+				`${tavily_.failed}/${tavilyQueries.length} Tavily search queries failed`,
+			);
+		}
+		if (backstopOn && backstop_.failed > 0) {
+			job.addWarning(
+				`${backstop_.failed}/${backstopQueries.length} backstop search queries failed`,
+			);
+		}
+		this.logger.log(
+			`search ${job.id}: ${inserted} results inserted (tavily hits=${tavily_.hitCount})`,
 		);
 
+		if (!anySucceeded) {
+			throw new Error("all search queries failed — no results fetched");
+		}
+	}
+
+	private tally(outcomes: PromiseSettledResult<SearchHit[]>[]): {
+		succeeded: number;
+		failed: number;
+		hitCount: number;
+		hits: SearchHit[];
+	} {
 		let succeeded = 0;
 		let failed = 0;
-		let inserted = 0;
-		for (const outcome of outcomes) {
-			if (outcome.status === "rejected") {
+		const hits: SearchHit[] = [];
+		for (const o of outcomes) {
+			if (o.status === "rejected") {
 				failed++;
 				continue;
 			}
 			succeeded++;
-			for (const hit of outcome.value) {
-				let normalizedUrl: string;
-				try {
-					normalizedUrl = normalizeUrl(hit.url);
-				} catch {
-					continue; // skip unparseable URLs
-				}
-				const result = new Result(
-					this.ids.next(),
-					job.id,
-					hit.url,
-					normalizedUrl,
-					hit.title,
-					hit.sourceDomain,
-					hit.publishedDate,
-					hit.content,
-					hit.score,
-				);
-				if (await this.results.insertIfNew(result)) inserted++;
-			}
+			hits.push(...o.value);
 		}
+		return { failed, hitCount: hits.length, hits, succeeded };
+	}
 
-		this.logger.log(
-			`search ${job.id}: ${succeeded}/${queries.length} queries ok, ${inserted} results inserted`,
-		);
-		if (failed > 0) {
-			job.addWarning(`${failed}/${queries.length} search queries failed`);
+	private async insertAll(job: Job, hits: SearchHit[]): Promise<number> {
+		let inserted = 0;
+		for (const hit of hits) {
+			let normalizedUrl: string;
+			try {
+				normalizedUrl = normalizeUrl(hit.url);
+			} catch {
+				continue;
+			}
+			const result = new Result(
+				this.ids.next(),
+				job.id,
+				hit.url,
+				normalizedUrl,
+				hit.title,
+				hit.sourceDomain,
+				hit.publishedDate,
+				hit.content,
+				hit.score,
+			);
+			if (await this.results.insertIfNew(result)) inserted++;
 		}
-		if (succeeded === 0) {
-			throw new Error("all search queries failed — no results fetched");
-		}
+		return inserted;
 	}
 }
