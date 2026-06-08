@@ -17,6 +17,7 @@ export class DrizzleJobRepository implements JobRepository {
 	async save(job: Job): Promise<void> {
 		await this.db.transaction(async (tx) => {
 			const row = {
+				brandContext: job.resolvedIdentity?.context ?? null,
 				chosenDomain: job.chosenDomain,
 				companyName: job.companyName,
 				contextNote: job.contextNote,
@@ -37,6 +38,7 @@ export class DrizzleJobRepository implements JobRepository {
 				.values(row)
 				.onConflictDoUpdate({
 					set: {
+						brandContext: row.brandContext,
 						chosenDomain: row.chosenDomain,
 						companyName: row.companyName,
 						contextNote: row.contextNote,
@@ -95,6 +97,7 @@ export class DrizzleJobRepository implements JobRepository {
 				resolvedIdentity:
 					row.resolvedDomains !== null
 						? {
+								context: row.brandContext ?? null,
 								domains: row.resolvedDomains,
 								handles: row.resolvedHandles ?? [],
 								name: row.companyName,

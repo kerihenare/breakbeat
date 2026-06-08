@@ -49,6 +49,7 @@ function repoStub(results: Result[]): {
 		markExcluded: async (id, ex) => {
 			recorded.push({ ex, id, kind: "excluded" });
 		},
+		setVerification: async () => {},
 	};
 	return { recorded, repo };
 }

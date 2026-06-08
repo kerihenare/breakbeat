@@ -45,6 +45,7 @@ function repoStub(): { repo: ResultRepository; inserted: string[] } {
 		},
 		markClassified: async () => {},
 		markExcluded: async () => {},
+		setVerification: async () => {},
 	};
 	return { inserted, repo };
 }

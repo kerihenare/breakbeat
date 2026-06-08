@@ -54,6 +54,7 @@ class FakeRepo implements ResultRepository {
 			?.exclude(exclusion.code, exclusion.detail);
 	}
 	async markClassified(): Promise<void> {}
+	async setVerification(): Promise<void> {}
 }
 
 function byId(items: Result[], id: string): Result | undefined {

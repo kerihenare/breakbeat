@@ -12,13 +12,19 @@ import {
 	type Exclusion,
 } from "../../domain/exclusion";
 import type { ResultRepository } from "../../domain/ports/result-repository.port";
-import { RESULT_STATUSES, Result, SENTIMENTS } from "../../domain/result";
+import {
+	RESULT_STATUSES,
+	Result,
+	SENTIMENTS,
+	VERIFICATION_STATUSES,
+	type VerificationStatus,
+} from "../../domain/result";
 
 type ResultRow = typeof results.$inferSelect;
 
 // Validate DB text columns against their closed sets before narrowing — a
 // corrupt/unexpected value fails fast rather than entering the domain via `as`.
-function toDomain(row: ResultRow): Result {
+export function rowToResult(row: ResultRow): Result {
 	return new Result(
 		row.id,
 		row.jobId,
@@ -48,6 +54,11 @@ function toDomain(row: ResultRow): Result {
 				: null,
 			sentiment: parseEnumOrNull(row.sentiment, SENTIMENTS, "sentiment"),
 			status: parseEnum(row.status, RESULT_STATUSES, "result status"),
+			verificationStatus: parseEnumOrNull(
+				row.verificationStatus,
+				VERIFICATION_STATUSES,
+				"verification status",
+			),
 		},
 	);
 }
@@ -75,6 +86,7 @@ export class DrizzleResultRepository implements ResultRepository {
 				status: result.status,
 				title: result.title,
 				url: result.url,
+				verificationStatus: result.verificationStatus,
 			})
 			.onConflictDoNothing({ target: [results.jobId, results.normalizedUrl] })
 			.returning({ id: results.id });
@@ -86,7 +98,7 @@ export class DrizzleResultRepository implements ResultRepository {
 			.select()
 			.from(results)
 			.where(and(eq(results.jobId, jobId), eq(results.status, "included")));
-		return rows.map(toDomain);
+		return rows.map(rowToResult);
 	}
 
 	async findAllByJob(jobId: string): Promise<Result[]> {
@@ -94,7 +106,7 @@ export class DrizzleResultRepository implements ResultRepository {
 			.select()
 			.from(results)
 			.where(eq(results.jobId, jobId));
-		return rows.map(toDomain);
+		return rows.map(rowToResult);
 	}
 
 	async markExcluded(id: string, exclusion: Exclusion): Promise<void> {
@@ -116,6 +128,13 @@ export class DrizzleResultRepository implements ResultRepository {
 		await this.db
 			.update(results)
 			.set({ confidence, contentType })
+			.where(eq(results.id, id));
+	}
+
+	async setVerification(id: string, status: VerificationStatus): Promise<void> {
+		await this.db
+			.update(results)
+			.set({ verificationStatus: status })
 			.where(eq(results.id, id));
 	}
 }

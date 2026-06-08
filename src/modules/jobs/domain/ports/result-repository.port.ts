@@ -1,6 +1,6 @@
 import type { ContentType } from "../content-type";
 import type { Confidence, Exclusion } from "../exclusion";
-import type { Result } from "../result";
+import type { Result, VerificationStatus } from "../result";
 
 export const RESULT_REPOSITORY = Symbol("RESULT_REPOSITORY");
 
@@ -15,4 +15,5 @@ export interface ResultRepository {
 		contentType: ContentType | null,
 		confidence: Confidence,
 	): Promise<void>;
+	setVerification(id: string, status: VerificationStatus): Promise<void>;
 }
