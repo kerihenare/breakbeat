@@ -22,6 +22,7 @@ const EXCLUSION_LABELS: Record<ExclusionCode, string> = {
 	aggregator: "Aggregator",
 	duplicate: "Duplicate",
 	ecommerce_review: "Ecommerce / review",
+	off_topic: "Off topic",
 	out_of_window: "Out of window",
 	own_channel: "Own channel",
 };
