@@ -5,7 +5,8 @@ export type ExclusionCode =
 	| "aggregator"
 	| "ecommerce_review"
 	| "out_of_window"
-	| "duplicate";
+	| "duplicate"
+	| "off_topic";
 
 export const EXCLUSION_CODES: readonly ExclusionCode[] = [
 	"own_channel",
@@ -13,6 +14,7 @@ export const EXCLUSION_CODES: readonly ExclusionCode[] = [
 	"ecommerce_review",
 	"out_of_window",
 	"duplicate",
+	"off_topic",
 ];
 
 export type Exclusion = {
