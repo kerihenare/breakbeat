@@ -74,4 +74,63 @@ describe("BrandfetchClient", () => {
 		);
 		expect(await client.search("acme")).toEqual([]);
 	});
+
+	describe("fetchContext", () => {
+		it("returns null when unconfigured (no BRANDFETCH_API_KEY)", async () => {
+			const client = new BrandfetchClient(configStub({}));
+			expect(await client.fetchContext("acme.com")).toBeNull();
+		});
+
+		it("composes a BrandContext from the brand response", async () => {
+			globalThis.fetch = (async () =>
+				({
+					json: async () => ({
+						company: {
+							industries: [{ confidence: 0.95, name: "Manufacturing" }],
+						},
+						description: "A global leader in widgets and gadgets.",
+						domain: "acme.com",
+						name: "Acme Inc",
+					}),
+					ok: true,
+				}) as unknown as Response) as typeof fetch;
+			const client = new BrandfetchClient(
+				configStub({ BRANDFETCH_API_KEY: "k", BRANDFETCH_CLIENT_ID: "c" }),
+			);
+			const result = await client.fetchContext("acme.com");
+			expect(result).not.toBeNull();
+			expect(result?.description).toBe(
+				"A global leader in widgets and gadgets.",
+			);
+			expect(result?.industry).toBe("Manufacturing");
+		});
+
+		it("returns null on a non-OK response (404)", async () => {
+			globalThis.fetch = (async () =>
+				({ ok: false, status: 404 }) as unknown as Response) as typeof fetch;
+			const client = new BrandfetchClient(
+				configStub({ BRANDFETCH_API_KEY: "k", BRANDFETCH_CLIENT_ID: "c" }),
+			);
+			expect(await client.fetchContext("acme.com")).toBeNull();
+		});
+
+		it("returns null when the payload has no usable description", async () => {
+			globalThis.fetch = (async () =>
+				({
+					json: async () => ({
+						company: {
+							industries: [{ confidence: 0.95, name: "Manufacturing" }],
+						},
+						description: "",
+						domain: "acme.com",
+						name: "Acme Inc",
+					}),
+					ok: true,
+				}) as unknown as Response) as typeof fetch;
+			const client = new BrandfetchClient(
+				configStub({ BRANDFETCH_API_KEY: "k", BRANDFETCH_CLIENT_ID: "c" }),
+			);
+			expect(await client.fetchContext("acme.com")).toBeNull();
+		});
+	});
 });

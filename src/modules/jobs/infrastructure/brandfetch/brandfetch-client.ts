@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { z } from "zod";
 import { AppConfigService } from "../../../../shared/config/app-config.service";
+import type { BrandContext } from "../../domain/brand-context";
 import type {
 	BrandCandidate,
 	BrandDirectory,
@@ -15,7 +16,17 @@ const SearchItem = z.object({
 const SearchResponse = z.array(SearchItem);
 
 const BrandLink = z.object({ name: z.string(), url: z.string() });
+const BrandIndustry = z.object({
+	confidence: z.number().optional(),
+	name: z.string(),
+});
 const BrandResponse = z.object({
+	company: z
+		.object({
+			industries: z.array(BrandIndustry).optional(),
+		})
+		.optional(),
+	description: z.string().optional(),
 	domain: z.string().optional(),
 	links: z.array(BrandLink).optional(),
 	name: z.string().optional(),
@@ -93,6 +104,43 @@ export class BrandfetchClient implements BrandDirectory {
 			};
 		} catch (err) {
 			this.logger.warn(`brand profile ${domain} failed: ${String(err)}`);
+			return null;
+		}
+	}
+
+	/**
+	 * Returns a compact BrandContext for entity verification and prompt anchoring.
+	 *
+	 * API path taken: compose from existing /v2/brands/{domain} Brand API response
+	 * fields (description, company.industries[0].name, brand name as alias).
+	 * No distinct Brand Context endpoint exists in the BrandFetch API as of the
+	 * time of implementation (confirmed via https://docs.brandfetch.com/reference/brand-api).
+	 *
+	 * Returns null if the API key is absent, the request fails, or the payload
+	 * contains no usable (non-empty) description — callers should degrade to a Warning.
+	 */
+	async fetchContext(domain: string): Promise<BrandContext | null> {
+		const apiKey = this.config.get("BRANDFETCH_API_KEY");
+		if (!apiKey) return null;
+		try {
+			const res = await fetch(
+				`https://api.brandfetch.io/v2/brands/${encodeURIComponent(domain)}`,
+				{ headers: { Authorization: `Bearer ${apiKey}` } },
+			);
+			if (!res.ok) {
+				this.logger.warn(`brand context ${domain}: HTTP ${res.status}`);
+				return null;
+			}
+			const parsed = BrandResponse.safeParse(await res.json());
+			if (!parsed.success) return null;
+			const description = parsed.data.description?.trim() ?? "";
+			if (!description) return null;
+			const industry =
+				parsed.data.company?.industries?.[0]?.name?.trim() ?? null;
+			const aliases = parsed.data.name ? [parsed.data.name] : [];
+			return { aliases, description, industry: industry || null };
+		} catch (err) {
+			this.logger.warn(`brand context ${domain} failed: ${String(err)}`);
 			return null;
 		}
 	}

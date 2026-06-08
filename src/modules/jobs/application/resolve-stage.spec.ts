@@ -16,6 +16,7 @@ function makeJob(name: string, chosenDomain: string | null): Job {
 
 function brandStub(over: Partial<BrandDirectory>): BrandDirectory {
 	return {
+		fetchContext: async () => null,
 		fetchProfile: async () => null,
 		isConfigured: () => true,
 		search: async () => [],
