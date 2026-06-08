@@ -18,12 +18,20 @@ export const SENTIMENTS: readonly Sentiment[] = [
 	"negative",
 ];
 
+export type VerificationStatus = "verified" | "uncertain";
+
+export const VERIFICATION_STATUSES: readonly VerificationStatus[] = [
+	"verified",
+	"uncertain",
+];
+
 type ResultState = {
 	status?: ResultStatus;
 	exclusion?: Exclusion | null;
 	contentType?: ContentType | null;
 	confidence?: Confidence | null;
 	sentiment?: Sentiment | null;
+	verificationStatus?: VerificationStatus | null;
 };
 
 /**
@@ -39,6 +47,7 @@ export class Result {
 	contentType: ContentType | null;
 	confidence: Confidence | null;
 	sentiment: Sentiment | null;
+	verificationStatus: VerificationStatus | null;
 
 	constructor(
 		readonly id: string,
@@ -59,6 +68,7 @@ export class Result {
 		this.contentType = state.contentType ?? null;
 		this.confidence = state.confidence ?? null;
 		this.sentiment = state.sentiment ?? null;
+		this.verificationStatus = state.verificationStatus ?? null;
 		// Invariant: excluded ⟺ carries an Exclusion. Guards against a corrupt
 		// row or mapper bug constructing an inconsistent Result.
 		if (this.status === "excluded" && this.exclusion === null) {
@@ -83,5 +93,10 @@ export class Result {
 	classify(contentType: ContentType | null, confidence: Confidence): void {
 		this.contentType = contentType;
 		this.confidence = confidence;
+	}
+
+	/** Record the Verify stage's entity-relevance judgement. */
+	setVerification(status: VerificationStatus): void {
+		this.verificationStatus = status;
 	}
 }
