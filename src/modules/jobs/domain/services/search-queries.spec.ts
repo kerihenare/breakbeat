@@ -1,5 +1,10 @@
 import type { ResolvedIdentity } from "../resolved-identity";
-import { buildSearchQueries } from "./search-queries";
+import {
+	buildBackstopQueries,
+	buildEscalationQueries,
+	buildSearchQueries,
+	TAVILY_THIN_THRESHOLD,
+} from "./search-queries";
 
 const identity: ResolvedIdentity = {
 	domains: ["acme.com"],
@@ -59,5 +64,28 @@ describe("buildSearchQueries", () => {
 			handles: ["https://acme.substack.com"],
 		})[0].options.excludeDomains;
 		expect(ex).toContain("acme.substack.com");
+	});
+});
+
+describe("backstop queries", () => {
+	const identity: ResolvedIdentity = {
+		domains: ["acme.com"],
+		handles: [],
+		name: "Acme",
+		negativeMatches: [],
+		provenance: "url_provided" as const,
+		window: { end: "2026-06-08", start: "2023-06-08" },
+	};
+	it("builds 1-3 broad NL queries naming the company", () => {
+		const qs = buildBackstopQueries(identity);
+		expect(qs.length).toBeGreaterThanOrEqual(1);
+		expect(qs.length).toBeLessThanOrEqual(3);
+		expect(qs.some((q) => q.includes("Acme"))).toBe(true);
+	});
+	it("escalation queries reuse the full angle set as plain strings", () => {
+		expect(buildEscalationQueries(identity).length).toBeGreaterThan(5);
+	});
+	it("exposes a numeric thin threshold", () => {
+		expect(typeof TAVILY_THIN_THRESHOLD).toBe("number");
 	});
 });

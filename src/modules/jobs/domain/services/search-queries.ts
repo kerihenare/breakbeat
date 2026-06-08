@@ -166,3 +166,23 @@ export function buildSearchQueries(identity: ResolvedIdentity): SearchQuery[] {
 
 	return queries;
 }
+
+/** Below this many usable Tavily results, escalate the Anthropic backstop to the full angle set. */
+export const TAVILY_THIN_THRESHOLD = 5;
+
+/** 1–3 broad natural-language queries for the Anthropic web-search backstop. */
+export function buildBackstopQueries(identity: ResolvedIdentity): string[] {
+	const { name } = identity;
+	const domain = identity.domains[0];
+	return [
+		domain
+			? `recent news and coverage about "${name}" (${domain})`
+			: `recent news and coverage about "${name}"`,
+		`"${name}" funding OR acquisition OR launch OR partnership news`,
+	];
+}
+
+/** The full angle set rendered as plain NL strings (escalation path). Deduped. */
+export function buildEscalationQueries(identity: ResolvedIdentity): string[] {
+	return [...new Set(buildSearchQueries(identity).map((q) => q.query))];
+}
