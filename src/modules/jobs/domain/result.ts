@@ -28,8 +28,10 @@ type ResultState = {
 
 /**
  * One search hit, scoped to a Job. Born `included`; soft Exclusion is the only
- * status transition. Result pages are never fetched — title + snippet is all
- * there is (the URL is the link target; normalizedUrl is the dedup key).
+ * status transition. Search gives us title + snippet; the Classify stage may
+ * Extract full page text (via Tavily) for survivors to re-classify them — we
+ * never fetch a Result page ourselves (the URL is the link target;
+ * normalizedUrl is the dedup key).
  */
 export class Result {
 	status: ResultStatus;

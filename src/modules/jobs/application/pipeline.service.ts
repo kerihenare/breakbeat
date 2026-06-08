@@ -51,7 +51,9 @@ export class PipelineService {
 			await this.persist(job);
 
 			await this.enter(job, "classifying");
-			await this.classify.run(job);
+			// Classify surfaces its own `extracting`/`refining` sub-phases via the
+			// pipeline's enter() so the live status reflects the heaviest stage.
+			await this.classify.run(job, (to) => this.enter(job, to));
 			await this.persist(job);
 
 			job.finalize();

@@ -17,8 +17,8 @@ A surface the company *controls* — its domains, or its named accounts/profiles
 _Avoid_: own site (too narrow — misses social accounts); "authored by the company" (wrong test — it would exclude press releases, a required Content Type)
 
 **Result**:
-One search hit returned by the Search stage, stored permanently with a `status` of `included` or `excluded`. Born `included`; Exclusion is the only transition. Scoped to its Job — re-runs produce fresh Results. ("Fetch" is reserved for the one real HTTP fetch: the Resolve homepage fetch.)
-_Avoid_: hit, item, link, fetched (Result pages are never fetched — title+snippet is all there is)
+One search hit returned by the Search stage, stored permanently with a `status` of `included` or `excluded`. Born `included`; Exclusion is the only transition. Scoped to its Job — re-runs produce fresh Results. Search returns title + snippet; the Classify stage **Extracts** full page text (via Tavily, server-side) for the Results that survive its snippet pass, then re-classifies them — we never fetch a Result page ourselves. ("Fetch" stays reserved for the one real HTTP fetch we make: the Resolve homepage fetch.)
+_Avoid_: hit, item, link; "fetched" for the Extract step (say **Extract** — Tavily retrieves the page, we don't)
 
 **Exclusion**:
 Marking a Result `excluded` with a machine-groupable `exclusion_code` (closed set: `own_channel`, `aggregator`, `ecommerce_review`, `out_of_window`, `duplicate`) plus a nullable human-readable `exclusion_detail` ("of #42", "LLM"). Codes record *why*, never which stage caught it — the Classify backstop writes the same vocabulary as the heuristics, with `exclusion_detail = "LLM"` recording the catcher (never free text from the model; that's the prompt-injection echo channel). Soft — never a delete; nothing is dropped except by never being returned by Search.

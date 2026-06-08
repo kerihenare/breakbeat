@@ -8,6 +8,8 @@ export type JobStatus =
 	| "searching"
 	| "filtering"
 	| "classifying"
+	| "extracting"
+	| "refining"
 	| "done"
 	| "failed"
 	| "done_with_warnings";
@@ -18,6 +20,8 @@ export const JOB_STATUSES: readonly JobStatus[] = [
 	"searching",
 	"filtering",
 	"classifying",
+	"extracting",
+	"refining",
 	"done",
 	"failed",
 	"done_with_warnings",
@@ -36,7 +40,19 @@ const LEGAL_EDGES: ReadonlyMap<JobStatus, ReadonlySet<JobStatus>> = new Map([
 	["resolving", new Set<JobStatus>(["searching", "failed"])],
 	["searching", new Set<JobStatus>(["filtering", "failed"])],
 	["filtering", new Set<JobStatus>(["classifying", "failed"])],
-	["classifying", new Set<JobStatus>(["done", "done_with_warnings", "failed"])],
+	// Classify runs as three sub-phases (snippet triage → Extract survivors →
+	// full-text refine). Each can short-circuit to a terminal when its work is
+	// skipped: no extractor → classifying finalizes; nothing extracted →
+	// extracting finalizes.
+	[
+		"classifying",
+		new Set<JobStatus>(["extracting", "done", "done_with_warnings", "failed"]),
+	],
+	[
+		"extracting",
+		new Set<JobStatus>(["refining", "done", "done_with_warnings", "failed"]),
+	],
+	["refining", new Set<JobStatus>(["done", "done_with_warnings", "failed"])],
 ]);
 
 export function isTerminal(status: JobStatus): boolean {

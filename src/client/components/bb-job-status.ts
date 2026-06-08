@@ -6,9 +6,11 @@ const LABELS: Record<string, string> = {
 	classifying: "Classifying",
 	done: "Done",
 	done_with_warnings: "Done · warnings",
+	extracting: "Extracting",
 	failed: "Failed",
 	filtering: "Filtering",
 	pending: "Pending",
+	refining: "Refining",
 	resolving: "Resolving",
 	searching: "Searching",
 };
