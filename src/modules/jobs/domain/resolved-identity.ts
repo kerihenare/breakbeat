@@ -1,3 +1,4 @@
+import type { BrandContext } from "./brand-context";
 import type { SearchWindow } from "./window";
 
 export type IdentityProvenance = "url_provided" | "heuristic" | "llm" | "none";
@@ -22,4 +23,5 @@ export type ResolvedIdentity = {
 	readonly window: SearchWindow;
 	readonly provenance: IdentityProvenance;
 	readonly negativeMatches: string[];
+	readonly context?: BrandContext | null;
 };
