@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
+import type { BrandContext } from "../domain/brand-context";
 import type { Job } from "../domain/job";
 import {
 	BRAND_DIRECTORY,
@@ -36,6 +37,7 @@ export class ResolveStage {
 		const domains: string[] = [];
 		const handles: string[] = [];
 		let name = job.companyName;
+		let context: BrandContext | null = null;
 		const provenance: IdentityProvenance = domain ? "url_provided" : "none";
 
 		if (domain) {
@@ -51,6 +53,12 @@ export class ResolveStage {
 				} else {
 					job.addWarning(
 						`brand profile for ${domain} unavailable — proceeding with the domain only`,
+					);
+				}
+				context = await this.brands.fetchContext(domain);
+				if (!context) {
+					job.addWarning(
+						`brand context for ${domain} unavailable — verification will run on name + domains only`,
 					);
 				}
 			}
@@ -75,6 +83,7 @@ export class ResolveStage {
 			: [];
 
 		const identity: ResolvedIdentity = {
+			context,
 			domains,
 			handles,
 			name,

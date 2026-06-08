@@ -100,4 +100,61 @@ describe("ResolveStage", () => {
 
 		expect(job.contextNote).toContain("Acme raises funding");
 	});
+
+	it("attaches the brand context to the Resolved Identity", async () => {
+		const profile: BrandProfile = {
+			domain: "devtools.io",
+			handles: [],
+			name: "DevTools",
+		};
+		const brands = brandStub({
+			fetchContext: async () => ({
+				aliases: [],
+				description: "A dev tools company.",
+				industry: "Software",
+			}),
+			fetchProfile: async () => profile,
+			search: async () => [],
+		});
+		const job = new Job(
+			"j2",
+			"DevTools",
+			"https://devtools.io",
+			WINDOW,
+			new Date("2026-06-08T00:00:00Z"),
+		);
+
+		await new ResolveStage(brands, webStub({})).run(job);
+
+		expect(job.resolvedIdentity?.context?.description).toBe(
+			"A dev tools company.",
+		);
+	});
+
+	it("warns when brand context is unavailable", async () => {
+		const profile: BrandProfile = {
+			domain: "devtools.io",
+			handles: [],
+			name: "DevTools",
+		};
+		const brands = brandStub({
+			fetchContext: async () => null,
+			fetchProfile: async () => profile,
+			search: async () => [],
+		});
+		const job = new Job(
+			"j3",
+			"DevTools",
+			"https://devtools.io",
+			WINDOW,
+			new Date("2026-06-08T00:00:00Z"),
+		);
+
+		await new ResolveStage(brands, webStub({})).run(job);
+
+		expect(job.warnings.some((w) => /brand context/i.test(w.message))).toBe(
+			true,
+		);
+		expect(job.resolvedIdentity?.context == null).toBe(true);
+	});
 });
