@@ -7,6 +7,7 @@ export type JobStatus =
 	| "resolving"
 	| "searching"
 	| "filtering"
+	| "verifying"
 	| "classifying"
 	| "extracting"
 	| "refining"
@@ -19,6 +20,7 @@ export const JOB_STATUSES: readonly JobStatus[] = [
 	"resolving",
 	"searching",
 	"filtering",
+	"verifying",
 	"classifying",
 	"extracting",
 	"refining",
@@ -39,7 +41,11 @@ const LEGAL_EDGES: ReadonlyMap<JobStatus, ReadonlySet<JobStatus>> = new Map([
 	["pending", new Set<JobStatus>(["resolving", "failed"])],
 	["resolving", new Set<JobStatus>(["searching", "failed"])],
 	["searching", new Set<JobStatus>(["filtering", "failed"])],
-	["filtering", new Set<JobStatus>(["classifying", "failed"])],
+	["filtering", new Set<JobStatus>(["verifying", "failed"])],
+	[
+		"verifying",
+		new Set<JobStatus>(["classifying", "done", "done_with_warnings", "failed"]),
+	],
 	// Classify runs as three sub-phases (snippet triage → Extract survivors →
 	// full-text refine). Each can short-circuit to a terminal when its work is
 	// skipped: no extractor → classifying finalizes; nothing extracted →

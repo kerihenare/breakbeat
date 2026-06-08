@@ -2,6 +2,7 @@ import {
 	assertTransition,
 	canTransition,
 	isTerminal,
+	JOB_STATUSES,
 	TERMINAL_STATES,
 } from "./job-status";
 
@@ -10,7 +11,8 @@ describe("job-status", () => {
 		expect(canTransition("pending", "resolving")).toBe(true);
 		expect(canTransition("resolving", "searching")).toBe(true);
 		expect(canTransition("searching", "filtering")).toBe(true);
-		expect(canTransition("filtering", "classifying")).toBe(true);
+		expect(canTransition("filtering", "verifying")).toBe(true);
+		expect(canTransition("verifying", "classifying")).toBe(true);
 		expect(canTransition("classifying", "extracting")).toBe(true);
 		expect(canTransition("extracting", "refining")).toBe(true);
 		expect(canTransition("refining", "done")).toBe(true);
@@ -32,6 +34,7 @@ describe("job-status", () => {
 			"resolving",
 			"searching",
 			"filtering",
+			"verifying",
 			"classifying",
 			"extracting",
 			"refining",
@@ -58,5 +61,20 @@ describe("job-status", () => {
 		expect(isTerminal("failed")).toBe(true);
 		expect(isTerminal("pending")).toBe(false);
 		expect(TERMINAL_STATES.size).toBe(3);
+	});
+});
+
+describe("verifying status", () => {
+	it("is a known status", () => {
+		expect(JOB_STATUSES).toContain("verifying");
+	});
+	it("sits between filtering and classifying", () => {
+		expect(canTransition("filtering", "verifying")).toBe(true);
+		expect(canTransition("verifying", "classifying")).toBe(true);
+		expect(canTransition("filtering", "classifying")).toBe(false);
+	});
+	it("can short-circuit to a terminal", () => {
+		expect(canTransition("verifying", "done_with_warnings")).toBe(true);
+		expect(canTransition("verifying", "failed")).toBe(true);
 	});
 });
