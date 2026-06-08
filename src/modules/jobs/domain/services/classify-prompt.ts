@@ -1,3 +1,4 @@
+import { brandContextToText } from "../brand-context";
 import type { ResolvedIdentity } from "../resolved-identity";
 
 export const CLASSIFY_MODEL = "claude-haiku-4-5";
@@ -77,6 +78,11 @@ export function buildClassifyPrompt(
 			`Other (different) companies to disambiguate against: ${identity.negativeMatches.join(", ")}`,
 		);
 	}
+	if (identity.context) {
+		identityLines.push(
+			`What this company is: ${brandContextToText(identity.context)}`,
+		);
+	}
 
 	const resultLines = inputs
 		.map((r) =>
@@ -132,11 +138,11 @@ export type ClassifyVerdictRaw = {
  * ids). First occurrence wins on dupes; reports rogue (returned not sent) and
  * missing (sent not returned) ids.
  */
-export function validateResultIds(
+export function validateResultIds<T extends { id: string }>(
 	sent: Set<string>,
-	received: ClassifyVerdictRaw[],
-): { valid: ClassifyVerdictRaw[]; rogue: string[]; missing: string[] } {
-	const valid: ClassifyVerdictRaw[] = [];
+	received: T[],
+): { valid: T[]; rogue: string[]; missing: string[] } {
+	const valid: T[] = [];
 	const rogue: string[] = [];
 	const seen = new Set<string>();
 	for (const item of received) {
