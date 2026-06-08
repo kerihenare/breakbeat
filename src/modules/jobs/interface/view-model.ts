@@ -36,6 +36,7 @@ export type ResultItemView = {
 	confidence: string | null;
 	exclusionCode: string | null;
 	exclusionDetail: string | null;
+	verificationStatus: string | null;
 };
 
 export type JobView = {
@@ -79,6 +80,7 @@ function toItem(r: Result): ResultItemView {
 		sourceDomain: r.sourceDomain,
 		title: r.title,
 		url: r.url,
+		verificationStatus: r.verificationStatus,
 	};
 }
 

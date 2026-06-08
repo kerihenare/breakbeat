@@ -15,6 +15,7 @@ type DemoHit = {
 	date: string | null;
 	type: ContentType | null;
 	exclude?: { code: ExclusionCode; detail: string };
+	verification?: "verified" | "uncertain";
 };
 
 // Realistic fixtures (DESIGN-BRIEF §10) so the Clipping Desk is viewable
@@ -82,6 +83,7 @@ const DEMO_HITS: DemoHit[] = [
 		title: "A field guide to Acme's recent pricing changes",
 		type: "blog_post",
 		url: "https://medium.com/@analyst/acme-pricing",
+		verification: "uncertain",
 	},
 	{
 		date: "2025-10-19",
@@ -120,6 +122,14 @@ const DEMO_HITS: DemoHit[] = [
 		type: null,
 		url: "https://reddit.com/r/devtools/acme",
 	},
+	{
+		date: "2025-09-12",
+		domain: "acmefoods.com",
+		exclude: { code: "off_topic", detail: "LLM" },
+		title: "Acme Foods recalls a product line",
+		type: null,
+		url: "https://acmefoods.com/recall",
+	},
 ];
 
 /** Build a finished demo Job + Results (not yet persisted). */
@@ -145,39 +155,44 @@ export function buildDemoJob(
 		warnings: [{ message: "demo data — no live search was performed" }],
 	});
 
-	const results = DEMO_HITS.map((hit) =>
-		hit.exclude
-			? new Result(
-					ids.next(),
-					jobId,
-					hit.url,
-					normalizeUrl(hit.url),
-					hit.title,
-					hit.domain,
-					hit.date,
-					null,
-					null,
-					{
-						exclusion: { code: hit.exclude.code, detail: hit.exclude.detail },
-						status: "excluded",
-					},
-				)
-			: new Result(
-					ids.next(),
-					jobId,
-					hit.url,
-					normalizeUrl(hit.url),
-					hit.title,
-					hit.domain,
-					hit.date,
-					null,
-					null,
-					{
-						confidence: "high",
-						contentType: hit.type,
-					},
-				),
-	);
+	const results = DEMO_HITS.map((hit) => {
+		if (hit.exclude) {
+			return new Result(
+				ids.next(),
+				jobId,
+				hit.url,
+				normalizeUrl(hit.url),
+				hit.title,
+				hit.domain,
+				hit.date,
+				null,
+				null,
+				{
+					exclusion: { code: hit.exclude.code, detail: hit.exclude.detail },
+					status: "excluded",
+				},
+			);
+		}
+		const result = new Result(
+			ids.next(),
+			jobId,
+			hit.url,
+			normalizeUrl(hit.url),
+			hit.title,
+			hit.domain,
+			hit.date,
+			null,
+			null,
+			{
+				confidence: "high",
+				contentType: hit.type,
+			},
+		);
+		if (hit.verification) {
+			result.setVerification(hit.verification);
+		}
+		return result;
+	});
 
 	return { job, results };
 }
