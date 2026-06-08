@@ -7,7 +7,8 @@ colors:
   ink-soft: "#3f3e3e"
   ink-deep: "#0f1010"
   press-blue: "#1a8cd6"
-  press-blue-deep: "#1071b3"
+  press-blue-deep: "#0d66a6"
+  press-blue-deeper: "#0a5990"
   focus-blue: "#46bbff"
   page-white: "#fdfdfc"
   newsprint: "#efe8e3"
@@ -23,6 +24,7 @@ colors:
   alert-coral: "#e85a68"
   alert-coral-surface: "#fec2c8"
   aether-gold: "#f0be0a"
+  aether-gold-deep: "#8a6d05"
 typography:
   display:
     fontFamily: "FK Grotesk, system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, sans-serif"
@@ -109,12 +111,17 @@ components:
   status-chip-alert:
     backgroundColor: "{colors.alert-coral-surface}"
     textColor: "{colors.ink}"
+  status-chip-quiet:
+    backgroundColor: "transparent"
+    textColor: "{colors.text-muted}"
+    typography: "{typography.mono}"
+    dotSize: "7px"
   filter-tab:
     backgroundColor: "transparent"
     textColor: "{colors.text-muted}"
     typography: "{typography.label}"
     rounded: "{rounded.md}"
-    padding: "4px 10px"
+    padding: "7px 12px"
   filter-tab-active:
     textColor: "{colors.press-blue-deep}"
   warning-banner:
@@ -152,14 +159,16 @@ A warm newsprint neutral ramp anchored by ink charcoal, with a single press-blue
 - **Ink Charcoal** (`#292a2a`, token `ink`): The workhorse. Body text, headings, icons, and the single primary button fill. This is the "ink" the whole system is printed in.
 - **Soft Ink** (`#3f3e3e`, token `ink-soft`): Primary button hover, slightly lifted ink for interactive states.
 - **Deep Ink** (`#0f1010`, token `ink-deep`): The highest-emphasis text. In the shipped UI it carries the company name as the page subject.
-- **Press Blue** (`#1a8cd6`, token `press-blue`): The one accent. Link colour, the active filter-tab border, and live signals. Used on ≤10% of any screen.
-- **Deep Press Blue** (`#1071b3`, token `press-blue-deep`): Link hover, the running-status chip text, and the active filter-tab label, where stronger contrast against light surfaces matters.
+- **Press Blue** (`#1a8cd6`, token `press-blue`): The one accent. Used for non-text accents only, the active filter-tab border and live signals, where 3:1 against a light surface is sufficient. At body size on newsprint it reaches only 3:1, below AA for text, so it is **not** used for link text.
+- **Deep Press Blue** (`#0d66a6`, token `press-blue-deep`): The AA-safe text shade of the accent (≥4.9:1 on newsprint, ≥5.9:1 on page white). Default link colour, the running-status chip text, and the active filter-tab label, anywhere the accent carries text.
+- **Deeper Press Blue** (`#0a5990`, token `press-blue-deeper`): Link hover, a step darker than the default link colour.
 - **Focus Blue** (`#46bbff`, token `focus-blue`): The global `:focus-visible` ring (`2px` outline, `2px` offset). The brighter blue reads clearly as a keyboard-focus signal against both paper and white.
 
 ### Secondary (semantic signals, never decoration)
 - **Live Green** (`#25b566`, token `live-green`) on **Live Surface** (`#bbf5d7`, token `live-green-surface`): the `done` status chip, and the positive segment of the sentiment gauge.
 - **Alert Coral** (`#e85a68`, token `alert-coral`) on **Coral Surface** (`#fec2c8`, token `alert-coral-surface`): the `done_with_warnings`/`failed` status chips, warning and error banners, and the negative sentiment segment. Always paired with a `⚠` glyph or a text label, never colour alone.
-- **Aether Gold** (`#f0be0a`, token `aether-gold`): a rare flag. In the shipped UI it marks a Result's "low confidence" label, nothing else.
+- **Aether Gold** (`#f0be0a`, token `aether-gold`): the brand flag hue. Reserved for non-text marks; at 1.7:1 on Card Cream it is unreadable as text.
+- **Deep Aether Gold** (`#8a6d05`, token `aether-gold-deep`): the AA-safe text shade (≥4.7:1 on Card Cream). Carries the Result "low confidence" label, the one shipped use.
 
 ### Neutral (the newsprint ramp)
 - **Page White** (`#fdfdfc`, token `page-white`): The cleanest base, used behind the densest reading (the results pane and input fills).
@@ -217,29 +226,33 @@ The shipped UI is HTMX-driven Nunjucks templates (`views/*.njk`) with three Lit 
 - **Primary:** Ink Charcoal fill (`#292a2a`), Page White text, `8px 16px` padding (`px-4 py-2`), Label type (500, 0.875rem). The primary action ("Start search") is ink, not a colored button, colour is reserved for the accent.
 - **Hover / Focus:** Background lifts to Soft Ink (`#3f3e3e`). Focus shows the global Focus Blue (`#46bbff`) `2px` ring, never a removed outline.
 - **Secondary / Selection:** The brand-candidate picker buttons, Card Cream fill (`#fcfaf9`) with a `1px` Border Hair edge, `8px 12px` padding (`px-3 py-2`), Ink text, left-aligned; hover to Newsprint Subtle (`#f3ece7`). This is the real secondary affordance, a full-width tappable card-button, not a tinted pill.
-- **Tertiary / Ghost:** Transparent fill, Text Muted, used for the filter tabs (see below) and the `← New search` back link.
+- **Tertiary / Ghost:** Transparent fill, Text Muted, used for the filter tabs (see below).
 
 ### Inputs / Fields
 - **Style:** Page White fill, `1px` Border Muted (`#d8cbc0`) stroke, 8px radius, `8px 12px` padding (`px-3 py-2`), Body type. Each input sits under a Label-type field label.
 - **Focus:** The global Focus Blue (`#46bbff`) `2px` outline at `2px` offset; no glow theatrics.
-- **The search front door** is two standard text fields, Company name and Homepage URL, in the rail. The URL field disambiguates which company is meant; a helper line ("Provide the URL for unambiguous results") sits below. The fields are standard size, the rail's placement, not extra chrome, gives them prominence.
+- **The search front door** is two standard text fields, Company name and Homepage URL, in the rail. The URL field disambiguates which company is meant; a helper line ("The homepage URL tells us which company you mean.") sits below. Company name is `required`. The fields are standard size, the rail's placement, not extra chrome, gives them prominence. The rail is a shared partial (`_search_rail.njk`) rendered on both the home page and a job page, so every surface is the same rail + results pane.
 
 ### Cards / Containers
-- **Result row:** 8px radius (`{rounded.lg}`), Card Cream (`#fcfaf9`) fill, `1px` Border Hair edge, `8px 12px` padding (`px-3 py-2`). A compact list item, the densest reusable surface. The Result title is a Body-weight link (Ink → Press Blue Deep on hover) that opens in a new tab with a `↗` glyph and a visually-hidden "(opens in a new tab)"; the source domain, date (or "date unknown"), and any low-confidence flag sit beneath in Mono.
+- **Result row:** 8px radius (`{rounded.lg}`), Card Cream (`#fcfaf9`) fill, `1px` Border Hair edge, `8px 12px` padding (`px-3 py-2`). A compact list item, the densest reusable surface. The Result title is a Body-weight link (Ink → Press Blue Deep on hover) that opens in a new tab with a `↗` glyph and a visually-hidden "(opens in a new tab)"; the source domain, date (or "date unknown"), and any low-confidence flag (in Deep Aether Gold, the AA-safe text shade) sit beneath in Mono.
 - **Shadow Strategy:** None at rest (see Elevation). Lift is tonal + bordered.
 - **Never nest cards.** A card inside a card is always wrong; use spacing, dividers, or tonal sections instead. Grouped Results live under plain `h3` headers inside the pane, not inside wrapper cards.
 
 ### Status Chip (Lit: `<bb-job-status>`)
-A fully-rounded pill (`{rounded.full}`), `2px 10px` padding, Mono-scale text. Resting fill is Newsprint Subtle with a `1px` Border Hair edge. **State carries colour and a label, never colour alone:** `done` → Live Surface; `done_with_warnings`/`failed` → Coral Surface; running states (`resolving`, `searching`, `filtering`, `extracting`, `classifying`, `refining`) → Press Blue Deep text with a gentle `bb-pulse` opacity animation. `role="status"` + `aria-live="polite"` announce transitions; the pulse is suppressed under `prefers-reduced-motion`.
+A fully-rounded pill (`{rounded.full}`), `2px 10px` padding, Mono-scale text. Resting fill is Newsprint Subtle with a `1px` Border Hair edge. **State carries colour and a label, never colour alone:** `done` → Live Surface; `done_with_warnings`/`failed` → Coral Surface; running states (`resolving`, `searching`, `filtering`, `extracting`, `classifying`, `refining`) → Press Blue Deep text with a gentle `bb-pulse` opacity animation. The pulse is suppressed under `prefers-reduced-motion`.
+
+Two attributes tune it for context:
+- **`live`** opts the chip into `role="status"` + `aria-live="polite"`. Set it only on the single job-header chip that updates in place via SSE; the rail's recent-job chips omit it so a list of static statuses isn't a screenful of live regions.
+- **`quiet`** swaps the filled pill for a small status dot (`7px`, the same semantic colour) plus a Text-Muted label. Used in the recent-jobs rail: a column of inactive statuses reads as calm history, not a wall of filled coral pills (a product-register rule: no heavy colour on inactive states). The dot carries colour, the label keeps meaning non-colour-only.
 
 ### Filter Tabs (Lit: `<bb-result-filter>`)
-A horizontal `tablist` of ghost buttons (transparent, Text Muted, 6px radius, `4px 10px` padding). Hover gets a Newsprint Subtle wash. The active tab takes Press Blue Deep text with a `1px` Press Blue border. Roving tabindex + arrow-key navigation; filtering is instant and client-side (the full Result set ships with the job), and the groups degrade to all-visible without JS.
+A horizontal `tablist` of ghost buttons (transparent, Text Muted, 6px radius, `7px 12px` padding for a comfortable touch target). Hover gets a Newsprint Subtle wash. The active tab takes Press Blue Deep text with a `1px` Press Blue border. Roving tabindex + arrow-key navigation; filtering is instant and client-side (the full Result set ships with the job), and the groups degrade to all-visible without JS.
 
 ### Sentiment Gauge (Lit: `<bb-sentiment-gauge>`)
 A single horizontal stacked bar (`0.75rem` tall, fully rounded, Border Hair edge on a Newsprint Muted track): Live Green positive, Text Dimmed neutral, Alert Coral negative. **Colour is never the sole carrier**, a labelled legend with a colour dot and an explicit count sits below, and the bar exposes `role="img"` with a full text `aria-label`. Segment widths animate on mount (`width 0.3s ease-out`), instant under `prefers-reduced-motion`.
 
 ### Count Triad
-Three plain figures in the job header, returned · excluded · classified, each a `1.5rem` semibold number over a Mono label. Deliberately *not* a hero-metric block: no accent colour, no supporting deltas, no card. Three honest counts, evenly spaced.
+Three plain figures in the job header, found · excluded · sorted by type (the funnel: total found, then filtered out, then how many of the remainder were classified into a type), each a `1.5rem` semibold number over a Mono label. Deliberately *not* a hero-metric block: no accent colour, no supporting deltas, no card. Three honest counts, evenly spaced.
 
 ### Warning / Error Banner
 A full-width Coral Surface (`#fec2c8`) block, Ink text, 8px radius, `8px 12px` padding, prefixed with `⚠`. Errors and each Warning render as their own banner with `role="status"`. Colour plus the glyph plus the message, never colour alone.
@@ -251,7 +264,7 @@ The core surface is the assembled company readout in the right-hand pane: a job 
 
 ### Do:
 - **Do** keep the Newsprint (`#efe8e3`) `<body>` background and Ink (`#292a2a`) type as the foundation; this warm paper is the committed Drumbeat brand, not a default to second-guess.
-- **Do** make the primary action Ink Charcoal, not a colored button. Save Press Blue for links, focus, the active filter, and live signals.
+- **Do** make the primary action Ink Charcoal, not a colored button. Save the press-blue accent for focus, the active filter, and live signals; link *text* uses Deep Press Blue (`#0d66a6`), the AA-safe shade, since the lighter accent only reaches 3:1 on newsprint.
 - **Do** keep Press Blue to ≤10% of any screen (The One Accent Rule).
 - **Do** attach a source (Mono domain + date) to every Result; trust comes from traceability, not tone, and show "date unknown" rather than hiding a missing date.
 - **Do** build depth from tonal layering + `1px border-hair`; ship surfaces flat (`box-shadow: none`) and reserve shadows for true overlays only.
