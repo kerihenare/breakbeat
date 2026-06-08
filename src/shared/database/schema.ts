@@ -8,11 +8,13 @@ import {
 	unique,
 	uuid,
 } from "drizzle-orm/pg-core";
+import type { BrandContext } from "../../modules/jobs/domain/brand-context";
 
 // Domain persistence schema (Slice 2). Replaces the Slice-1 app_meta baseline.
 
 export const jobs = pgTable("jobs", {
 	// Resolved Identity (Slice 4) — nullable until the Resolve stage runs.
+	brandContext: jsonb("brand_context").$type<BrandContext>(),
 	chosenDomain: text("chosen_domain"),
 	companyName: text("company_name").notNull(),
 	contextNote: text("context_note"),
@@ -54,6 +56,7 @@ export const results = pgTable(
 		status: text("status").notNull().default("included"),
 		title: text("title").notNull(),
 		url: text("url").notNull(),
+		verificationStatus: text("verification_status"),
 	},
 	(t) => [
 		unique("results_job_url_unique").on(t.jobId, t.normalizedUrl),

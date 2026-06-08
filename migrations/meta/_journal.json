@@ -1,34 +1,41 @@
 {
-	"dialect": "postgresql",
-	"entries": [
-		{
-			"breakpoints": true,
-			"idx": 0,
-			"tag": "0000_soft_shaman",
-			"version": "7",
-			"when": 1780861990714
-		},
-		{
-			"breakpoints": true,
-			"idx": 1,
-			"tag": "0001_early_ironclad",
-			"version": "7",
-			"when": 1780865925068
-		},
-		{
-			"breakpoints": true,
-			"idx": 2,
-			"tag": "0002_glorious_sharon_carter",
-			"version": "7",
-			"when": 1780868361458
-		},
-		{
-			"breakpoints": true,
-			"idx": 3,
-			"tag": "0003_adorable_secret_warriors",
-			"version": "7",
-			"when": 1780880409396
-		}
-	],
-	"version": "7"
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "breakpoints": true,
+      "idx": 0,
+      "tag": "0000_soft_shaman",
+      "version": "7",
+      "when": 1780861990714
+    },
+    {
+      "breakpoints": true,
+      "idx": 1,
+      "tag": "0001_early_ironclad",
+      "version": "7",
+      "when": 1780865925068
+    },
+    {
+      "breakpoints": true,
+      "idx": 2,
+      "tag": "0002_glorious_sharon_carter",
+      "version": "7",
+      "when": 1780868361458
+    },
+    {
+      "breakpoints": true,
+      "idx": 3,
+      "tag": "0003_adorable_secret_warriors",
+      "version": "7",
+      "when": 1780880409396
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1780886139341,
+      "tag": "0004_massive_eddie_brock",
+      "breakpoints": true
+    }
+  ],
+  "version": "7"
 }
