@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-08T00:00:00.000Z",
+  "title": "Design System: Breakbeat",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "primary", "displayName": "Ink Charcoal", "canonical": "oklch(28.5% 0.002 197)", "tonalRamp": ["#0f1010", "#1d1e1e", "#292a2a", "#3f3e3e", "#5c5959", "#857f7f", "#b3acac", "#e3dcd8"] },
+      "press-blue": { "role": "primary", "displayName": "Press Blue", "canonical": "oklch(63% 0.13 244)", "tonalRamp": ["#0a3a5c", "#0d5489", "#1071b3", "#1a8cd6", "#46bbff", "#7fd0ff", "#b4e3ff", "#e3f4ff"] },
+      "newsprint": { "role": "neutral", "displayName": "Newsprint", "canonical": "oklch(93% 0.008 56)", "tonalRamp": ["#3a352f", "#5c5247", "#867a6c", "#b3a596", "#d8cbc0", "#efe8e3", "#f3ece7", "#fdfdfc"] },
+      "live-green": { "role": "secondary", "displayName": "Live Green", "canonical": "oklch(70% 0.16 153)", "tonalRamp": ["#0c3c22", "#125a33", "#188048", "#1f9e58", "#25b566", "#5fcf8c", "#9fe5bd", "#bbf5d7"] },
+      "alert-coral": { "role": "secondary", "displayName": "Alert Coral", "canonical": "oklch(65% 0.17 18)", "tonalRamp": ["#5c1c22", "#892a33", "#b33843", "#d64a57", "#e85a68", "#f08a93", "#f8b0b8", "#fec2c8"] },
+      "aether-gold": { "role": "tertiary", "displayName": "Aether Gold", "canonical": "oklch(82% 0.16 87)", "tonalRamp": ["#5c4a04", "#897006", "#b39608", "#d6b309", "#f0be0a", "#f5d24f", "#fae49f", "#fdf3cf"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page subject (searched company name) in the job header. One per view. Fixed 1.875rem (text-3xl), not fluid." },
+      "title": { "displayName": "Title", "purpose": "Largest section headings, brand-candidate prompt, recent-jobs label. Result-group headers step down to 1rem semibold; count figures step up to 1.5rem." },
+      "body": { "displayName": "Body", "purpose": "Reading copy and Result titles. Cap prose at 65–75ch." },
+      "label": { "displayName": "Label", "purpose": "Buttons, field labels, filter tabs. Short uppercase section labels (Recent jobs, Sentiment) use this with tracking-wide." },
+      "mono": { "displayName": "Mono", "purpose": "Machine data only: source domains, dates, counts, search window. Shipped as the .mono class in Text Muted." }
+    },
+    "shadows": [
+      { "name": "overlay", "value": "0 8px 24px rgba(41, 42, 42, 0.12)", "purpose": "Forward standard for dropdowns, popovers, command menus. Not yet instantiated; the shipped UI is flat everywhere." },
+      { "name": "modal", "value": "0 16px 48px rgba(41, 42, 42, 0.18)", "purpose": "Forward standard for dialogs above a dimmed backdrop. Not yet instantiated." }
+    ],
+    "motion": [
+      { "name": "gauge-reveal", "value": "width 0.3s ease-out", "purpose": "Sentiment gauge segment widths animate on mount; instant under prefers-reduced-motion." },
+      { "name": "status-pulse", "value": "bb-pulse 1.4s ease-in-out infinite", "purpose": "Running status chip opacity pulse (50% { opacity: 0.55 }); suppressed under prefers-reduced-motion." },
+      { "name": "focus-ring", "value": "2px solid #46bbff (outline-offset 2px)", "purpose": "Global :focus-visible ring on every interactive element." }
+    ],
+    "breakpoints": [
+      { "name": "lg", "value": "1024px", "purpose": "Split layout threshold: below lg the search rail + results pane stack into one column; at/above lg they sit side-by-side (320px rail + 1fr pane)." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single ink-filled primary action (e.g. \"Start search\"). Colour is reserved for the accent, so the loudest action is ink, not blue.",
+      "html": "<button type=\"submit\" class=\"ds-btn-primary\">Start search</button>",
+      "css": ".ds-btn-primary { background: #292a2a; color: #fdfdfc; font-family: var(--font-sans, \"FK Grotesk\", system-ui, sans-serif); font-size: 0.875rem; font-weight: 500; line-height: 1.4; padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; transition: background 0.15s ease-out; } .ds-btn-primary:hover { background: #3f3e3e; } .ds-btn-primary:focus-visible { outline: 2px solid #46bbff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary / Selection Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "The brand-candidate picker: a full-width, left-aligned card-button. The real secondary affordance, not a tinted pill. Optional brand icon, name, then the domain in mono.",
+      "html": "<button type=\"submit\" class=\"ds-btn-secondary\"><img class=\"ds-btn-secondary__icon\" alt=\"\" width=\"20\" height=\"20\" src=\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><rect width='20' height='20' rx='4' fill='%23d8cbc0'/></svg>\" /><span class=\"ds-btn-secondary__name\">Acme Corporation</span><span class=\"ds-btn-secondary__domain\">acme.com</span></button>",
+      "css": ".ds-btn-secondary { width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; background: #fcfaf9; color: #292a2a; font-family: var(--font-sans, \"FK Grotesk\", system-ui, sans-serif); font-size: 0.875rem; padding: 8px 12px; border: 1px solid #ebe0d8; border-radius: 8px; cursor: pointer; transition: background 0.15s ease-out; } .ds-btn-secondary:hover { background: #f3ece7; } .ds-btn-secondary:focus-visible { outline: 2px solid #46bbff; outline-offset: 2px; } .ds-btn-secondary__icon { border-radius: 4px; flex-shrink: 0; } .ds-btn-secondary__name { font-weight: 500; } .ds-btn-secondary__domain { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.8125rem; color: #5c5959; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Standard labelled text/url field. The search front door is two of these (company name + homepage URL) in the rail.",
+      "html": "<label class=\"ds-field\">Homepage URL<input class=\"ds-input\" type=\"url\" placeholder=\"https://acme.com\" /></label>",
+      "css": ".ds-field { display: grid; gap: 4px; font-family: var(--font-sans, \"FK Grotesk\", system-ui, sans-serif); font-size: 0.875rem; font-weight: 500; color: #292a2a; } .ds-input { background: #fdfdfc; color: #292a2a; font: inherit; font-weight: 400; font-size: 1rem; padding: 8px 12px; border: 1px solid #d8cbc0; border-radius: 8px; } .ds-input::placeholder { color: #6f6b6b; } .ds-input:focus-visible { outline: 2px solid #46bbff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Result Row",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The densest reusable surface: one piece of coverage. Title link (opens in a new tab) over a mono meta line of source domain + date + optional low-confidence flag. Flat, lifted by tone + border only.",
+      "html": "<li class=\"ds-result-row\"><a class=\"ds-result-row__title\" href=\"#\" target=\"_blank\" rel=\"noopener noreferrer\">Acme raises $40M Series B to expand European operations<span aria-hidden=\"true\"> ↗</span><span class=\"ds-sr-only\">(opens in a new tab)</span></a><div class=\"ds-result-row__meta\">techcrunch.com · 2026-04-12 · <span class=\"ds-result-row__flag\">low confidence</span></div></li>",
+      "css": ".ds-result-row { list-style: none; background: #fcfaf9; border: 1px solid #ebe0d8; border-radius: 8px; padding: 8px 12px; } .ds-result-row__title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: var(--font-sans, \"FK Grotesk\", system-ui, sans-serif); font-size: 1rem; font-weight: 500; color: #292a2a; text-decoration: none; } .ds-result-row__title:hover { color: #1071b3; } .ds-result-row__title:focus-visible { outline: 2px solid #46bbff; outline-offset: 2px; } .ds-result-row__meta { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.8125rem; color: #5c5959; margin-top: 4px; } .ds-result-row__flag { color: #f0be0a; } .ds-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "status-chip",
+      "description": "Live job status (<bb-job-status>). Pill with state carried by colour AND label. done → green surface; warnings/failed → coral surface; running → press-blue text with a slow pulse. role=status / aria-live announce transitions.",
+      "html": "<span class=\"ds-status ds-status--done\" role=\"status\" aria-live=\"polite\">Done</span> <span class=\"ds-status ds-status--running\" role=\"status\" aria-live=\"polite\">Searching</span>",
+      "css": ".ds-status { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-family: var(--font-sans, \"FK Grotesk\", system-ui, sans-serif); font-size: 0.8125rem; font-weight: 500; background: #f3ece7; color: #292a2a; border: 1px solid #ebe0d8; } .ds-status--done { background: #bbf5d7; } .ds-status--alert { background: #fec2c8; } .ds-status--running { color: #1071b3; animation: ds-pulse 1.4s ease-in-out infinite; } @keyframes ds-pulse { 50% { opacity: 0.55; } } @media (prefers-reduced-motion: reduce) { .ds-status--running { animation: none; } }"
+    },
+    {
+      "name": "Filter Tabs",
+      "kind": "nav",
+      "refersTo": "filter-tab",
+      "description": "Content-type filter tablist (<bb-result-filter>). Ghost buttons; active tab takes press-blue text + border. Roving tabindex + arrow keys; client-side, instant, degrades to all-visible without JS.",
+      "html": "<div class=\"ds-filter\" role=\"tablist\" aria-label=\"Filter by content type\"><button class=\"ds-filter__tab ds-filter__tab--active\" role=\"tab\" aria-selected=\"true\">All</button><button class=\"ds-filter__tab\" role=\"tab\" aria-selected=\"false\">News (12)</button><button class=\"ds-filter__tab\" role=\"tab\" aria-selected=\"false\">Podcasts (3)</button></div>",
+      "css": ".ds-filter { display: block; } .ds-filter__tab { font-family: var(--font-sans, \"FK Grotesk\", system-ui, sans-serif); font-size: 0.875rem; padding: 4px 10px; margin-right: 4px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: #5c5959; cursor: pointer; } .ds-filter__tab:hover { background: #f3ece7; } .ds-filter__tab--active { color: #1071b3; border-color: #1a8cd6; } .ds-filter__tab:focus-visible { outline: 2px solid #46bbff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Sentiment Gauge",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Stacked positive/neutral/negative bar (<bb-sentiment-gauge>). Colour is never the sole carrier: a labelled legend with dot + count sits below, and the bar exposes role=img with a full aria-label. Widths animate on mount; instant under reduced motion.",
+      "html": "<div class=\"ds-gauge\"><div class=\"ds-gauge__bar\" role=\"img\" aria-label=\"Sentiment: 7 positive, 4 neutral, 1 negative\"><div class=\"ds-gauge__seg ds-gauge__seg--pos\" style=\"width:58%\"></div><div class=\"ds-gauge__seg ds-gauge__seg--neu\" style=\"width:33%\"></div><div class=\"ds-gauge__seg ds-gauge__seg--neg\" style=\"width:9%\"></div></div><div class=\"ds-gauge__labels\"><span><span class=\"ds-gauge__dot ds-gauge__seg--pos\"></span>Positive 7</span><span><span class=\"ds-gauge__dot ds-gauge__seg--neu\"></span>Neutral 4</span><span><span class=\"ds-gauge__dot ds-gauge__seg--neg\"></span>Negative 1</span></div></div>",
+      "css": ".ds-gauge__bar { display: flex; height: 0.75rem; border-radius: 9999px; overflow: hidden; border: 1px solid #ebe0d8; background: #f7f3ef; } .ds-gauge__seg { height: 100%; transition: width 0.3s ease-out; } .ds-gauge__seg--pos { background: #25b566; } .ds-gauge__seg--neu { background: #6f6b6b; } .ds-gauge__seg--neg { background: #e85a68; } .ds-gauge__labels { display: flex; gap: 1rem; margin-top: 0.5rem; font-family: var(--font-sans, \"FK Grotesk\", system-ui, sans-serif); font-size: 0.8125rem; color: #5c5959; } .ds-gauge__dot { display: inline-block; width: 0.6rem; height: 0.6rem; border-radius: 9999px; margin-right: 0.35rem; vertical-align: middle; } @media (prefers-reduced-motion: reduce) { .ds-gauge__seg { transition: none; } }"
+    },
+    {
+      "name": "Count Triad",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Three plain figures in the job header (returned / excluded / classified). Deliberately NOT a hero-metric block: no accent colour, no deltas, no card. Three honest counts, evenly spaced.",
+      "html": "<div class=\"ds-triad\"><div><div class=\"ds-triad__num\">42</div><div class=\"ds-triad__label\">returned</div></div><div><div class=\"ds-triad__num\">11</div><div class=\"ds-triad__label\">excluded</div></div><div><div class=\"ds-triad__num\">31</div><div class=\"ds-triad__label\">classified</div></div></div>",
+      "css": ".ds-triad { display: flex; gap: 32px; } .ds-triad__num { font-family: var(--font-sans, \"FK Grotesk\", system-ui, sans-serif); font-size: 1.5rem; font-weight: 600; color: #292a2a; } .ds-triad__label { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.8125rem; color: #5c5959; }"
+    },
+    {
+      "name": "Warning Banner",
+      "kind": "custom",
+      "refersTo": "warning-banner",
+      "description": "Full-width coral-surface block for a warning or error. Colour + glyph + message, never colour alone. role=status for live announcement.",
+      "html": "<p class=\"ds-banner\" role=\"status\">⚠ Brand resolution skipped — no BrandFetch key; using the URL you provided.</p>",
+      "css": ".ds-banner { background: #fec2c8; color: #292a2a; border-radius: 8px; padding: 8px 12px; font-family: var(--font-sans, \"FK Grotesk\", system-ui, sans-serif); font-size: 0.875rem; margin: 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Clipping Desk",
+    "overview": "Breakbeat is where a PR pro sits down, names a company, and watches its public footprint assemble itself — the modern descendant of the press-clipping desk where comms teams once pinned coverage to a board. The system inherits the Drumbeat platform's identity wholesale: warm newsprint paper, ink charcoal type, and a single press-room sans (FK Grotesk). The aesthetic is editorial and calm, not the cold blue-gray of generic SaaS. This is a product surface, design serves the task: the shipped layout is a two-column split (a fixed 320px search rail on warm Newsprint Muted, then the results pane on Page White) that collapses to a single column below lg. Color is restrained — the warm neutral ramp carries the surface, ink charcoal carries text and the one primary action, and a single press blue accent marks links, focus, and the live status signal. It explicitly rejects the generic SaaS template, the cluttered enterprise dashboard, and heavy marketing flourish.",
+    "keyCharacteristics": [
+      "Warm newsprint paper foundation with ink-charcoal type, editorial not corporate.",
+      "One press-blue accent, used sparingly for action, focus, and live signals.",
+      "A single humanist sans (FK Grotesk) carrying all hierarchy through weight and a fixed type scale.",
+      "Flat surfaces, hairline borders, fast functional motion (no choreography).",
+      "Results-first: the split layout puts the assembled readout front and centre; chrome recedes to the rail."
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "Press blue is the only chromatic accent in the core UI; it lives on ≤10% of any screen. Its scarcity is what makes \"this is a link / this is the active filter / this is live\" legible. Semantic green, coral, and gold are signals, not accents.", "section": "colors" },
+      { "name": "The Warm-On-Purpose Rule", "body": "The newsprint background is a committed brand choice, not the AI warm-cream reflex. Never flatten it to a cool gray, and never add a second warm-neutral family. The warmth is the brand; the variation is tonal, not hue-shifted.", "section": "colors" },
+      { "name": "The One Family Rule", "body": "FK Grotesk does all the work. No second display or body face. Mono appears only on machine data (domains, dates, counts), never on prose.", "section": "typography" },
+      { "name": "The Short-Label Rule", "body": "Uppercase is reserved for genuine short section labels of ≤4 words (Recent jobs, Sentiment), set in Label type with tracking-wide. Never on sentences, never as a decorative eyebrow above every section.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest (box-shadow: none). A shadow means \"this floats above the page.\" If an element isn't a true overlay, it gets a border and a tonal shift, not a shadow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep the Newsprint (#efe8e3) body background and Ink (#292a2a) type as the foundation; this warm paper is the committed Drumbeat brand.",
+      "Do make the primary action Ink Charcoal, not a colored button. Save Press Blue for links, focus, the active filter, and live signals.",
+      "Do keep Press Blue to ≤10% of any screen (The One Accent Rule).",
+      "Do attach a source (Mono domain + date) to every Result; show \"date unknown\" rather than hiding a missing date.",
+      "Do build depth from tonal layering + 1px border-hair; ship surfaces flat and reserve shadows for true overlays only.",
+      "Do carry all type hierarchy with FK Grotesk weight + the fixed rem scale; use Mono only for machine data.",
+      "Do keep motion functional and brief: gauge reveal 0.3s ease-out, running chip a slow pulse, both with a prefers-reduced-motion fallback.",
+      "Do pair every status colour (green / coral / gold) with a glyph, label, or count, and give live regions role=status / aria-live."
+    ],
+    "donts": [
+      "Don't ship the generic SaaS template: no purple gradient, no hero-metric block, no endless identical icon-heading-text card grids. The count triad stays three plain numbers.",
+      "Don't drift toward the cluttered enterprise dashboard: no dense gray everything-at-once legacy UI.",
+      "Don't add heavy marketing flourish: no scroll-jacking, oversized hero imagery, or decorative animation that delays the work.",
+      "Don't flatten the warm newsprint to a cool gray, or introduce a second warm-neutral family.",
+      "Don't use a border-left/border-right colored stripe (>1px) as an accent; warnings use a full Coral Surface fill, not a stripe.",
+      "Don't use a clamp/fluid heading scale in the app; this is a product surface on a fixed rem scale.",
+      "Don't use gradient text, glassmorphism as default decoration, or a tracked all-caps eyebrow above every section.",
+      "Don't nest cards, or let muted metadata text drop below 4.5:1 contrast on its background."
+    ]
+  }
+}
