@@ -38,6 +38,16 @@ Each slice's spec and plan are in `docs/superpowers/`; each is a reviewable PR.
 - **Sentiment is mocked** — deterministic, isolated in one helper, removable without disturbing the layout; a real pass is a drop-in.
 - **Honest verification.** Where live API keys were unavailable, the degraded paths were verified and reported as such; the UI was confirmed with Playwright screenshots; nothing was claimed as passing without evidence.
 
+## Slice 10 additions: Verify, Brand Context, and search backstop
+
+**Verify stage.** A new pipeline stage runs between Filter and Classify (`verifying` Job status). It judges each still-included Result against the Resolved Identity's Brand Context on title, snippet, and URL — no Extract, no full-page fetch. High-confidence mismatch → Excluded as `off_topic` (`exclusion_detail = "LLM"`, same convention as the Classify backstop). Softer judgements stay included and are marked `verification_status = "uncertain"`, surfaced in the Clipping Desk as a quiet "may not be about this company" note. A clear match → `verified`. Unconfigured or missing brand context records a Warning and is a no-op; the stage never fails the Job. The `off_topic` code joins the closed Exclusion set; `verification_status` is nullable on every Result (NULL = Verify didn't run, not a stored "unverified" value).
+
+**Brand Context.** BrandFetch now returns `description`, `industry`, and `aliases` alongside the identity data, composed from the Brand API profile (there is no separate Brand Context endpoint). These fields are stored on the Resolved Identity and consumed by both Verify and Classify. Absence — missing key or brand not found — records a Warning; the Job proceeds without them.
+
+**Anthropic web-search backstop.** Search now runs Tavily queries in parallel with an Anthropic `web_search` tool pass: a few broad natural-language queries fire by default, and the full Angle Query set is added only when Tavily returns fewer than a configured hit threshold. One `ANTHROPIC_API_KEY` covers classification, verification, and this backstop — three signals, one key.
+
+**Cost note.** The backstop fires 1–3 `web_search` tool calls under normal conditions and mirrors the full angle set only when Tavily is thin, so incremental cost is small in the typical case. The Verify stage adds one Claude Haiku pass over snippets per Result, capped at `VERIFY_CAP = 400` Results — comparable to a single Classify batch.
+
 ## Next steps
 
 - Job cancellation + retry; boot-time sweep of interrupted jobs; resume from the last completed stage.
