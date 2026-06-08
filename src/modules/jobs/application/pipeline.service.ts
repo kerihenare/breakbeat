@@ -10,6 +10,7 @@ import { ClassifyStage } from "./classify-stage";
 import { FilterStage } from "./filter-stage";
 import { ResolveStage } from "./resolve-stage";
 import { SearchStage } from "./search-stage";
+import { VerifyStage } from "./verify-stage";
 
 const STAGE_DELAY_MS = 400;
 
@@ -17,7 +18,7 @@ function delay(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Orchestrates the pipeline: Resolve → Search → Filter → Classify (all real). */
+/** Orchestrates the pipeline: Resolve → Search → Filter → Verify → Classify (all real). */
 @Injectable()
 export class PipelineService {
 	private readonly logger = new Logger(PipelineService.name);
@@ -28,6 +29,7 @@ export class PipelineService {
 		private readonly resolve: ResolveStage,
 		private readonly search: SearchStage,
 		private readonly filter: FilterStage,
+		private readonly verify: VerifyStage,
 		private readonly classify: ClassifyStage,
 	) {}
 
@@ -48,6 +50,10 @@ export class PipelineService {
 
 			await this.enter(job, "filtering");
 			await this.filter.run(job);
+			await this.persist(job);
+
+			await this.enter(job, "verifying");
+			await this.verify.run(job);
 			await this.persist(job);
 
 			await this.enter(job, "classifying");

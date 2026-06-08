@@ -8,6 +8,7 @@ import { PipelineService } from "./application/pipeline.service";
 import { ResolveStage } from "./application/resolve-stage";
 import { SearchStage } from "./application/search-stage";
 import { SubmitJob } from "./application/submit-job.use-case";
+import { VerifyStage } from "./application/verify-stage";
 import { BRAND_DIRECTORY } from "./domain/ports/brand-directory.port";
 import { CLASSIFIER } from "./domain/ports/classifier.port";
 import { CLOCK } from "./domain/ports/clock.port";
@@ -17,9 +18,13 @@ import { JOB_EVENTS } from "./domain/ports/job-events.port";
 import { JOB_QUEUE } from "./domain/ports/job-queue.port";
 import { JOB_REPOSITORY } from "./domain/ports/job-repository.port";
 import { RESULT_REPOSITORY } from "./domain/ports/result-repository.port";
+import { RESULT_VERIFIER } from "./domain/ports/result-verifier.port";
 import { SEARCH_PROVIDER } from "./domain/ports/search-provider.port";
 import { WEB_CONTEXT } from "./domain/ports/web-context.port";
+import { WEB_SEARCH_BACKSTOP } from "./domain/ports/web-search-backstop.port";
+import { AnthropicWebSearch } from "./infrastructure/anthropic/anthropic-web-search";
 import { HaikuClassifier } from "./infrastructure/anthropic/haiku-classifier";
+import { HaikuVerifier } from "./infrastructure/anthropic/haiku-verifier";
 import { BrandfetchClient } from "./infrastructure/brandfetch/brandfetch-client";
 import { SystemClock } from "./infrastructure/clock";
 import { RedisJobEvents } from "./infrastructure/events/redis-job-events";
@@ -86,10 +91,13 @@ function redisConnection(config: AppConfigService): {
 		{ provide: SEARCH_PROVIDER, useClass: TavilySearch },
 		{ provide: CONTENT_EXTRACTOR, useClass: TavilyExtractor },
 		{ provide: CLASSIFIER, useClass: HaikuClassifier },
+		{ provide: RESULT_VERIFIER, useClass: HaikuVerifier },
+		{ provide: WEB_SEARCH_BACKSTOP, useClass: AnthropicWebSearch },
 		SubmitJob,
 		ResolveStage,
 		SearchStage,
 		FilterStage,
+		VerifyStage,
 		ClassifyStage,
 		PipelineService,
 	],
