@@ -2,7 +2,7 @@
 	<header class="border-b border-border-hair pb-4 mb-4">
 		<div class="flex items-center gap-3 flex-wrap">
 			<h1 class="text-3xl font-semibold tracking-tight m-0 text-ink-deep">{{ view.companyName }}</h1>
-			<bb-job-status status="{{ view.status }}"></bb-job-status>
+			<bb-job-status status="{{ view.status }}" live></bb-job-status>
 		</div>
 		<p class="text-text-muted text-sm mt-1">
 			{% if view.provenance %}identified via {{ view.provenance }} · {% endif %}
@@ -11,13 +11,16 @@
 
 		<!-- Count triad (three clear figures, not a hero-metric block) -->
 		<div class="flex gap-8 mt-4">
-			<div><div class="text-2xl font-semibold">{{ view.counts.returned }}</div><div class="mono">returned</div></div>
+			<div><div class="text-2xl font-semibold">{{ view.counts.returned }}</div><div class="mono">found</div></div>
 			<div><div class="text-2xl font-semibold">{{ view.counts.excluded }}</div><div class="mono">excluded</div></div>
-			<div><div class="text-2xl font-semibold">{{ view.counts.classified }}</div><div class="mono">classified</div></div>
+			<div><div class="text-2xl font-semibold">{{ view.counts.classified }}</div><div class="mono">sorted by type</div></div>
 		</div>
 
 		{% if view.error %}
-		<p class="mt-3 bg-alert-coral-surface text-ink rounded-lg px-3 py-2 text-sm">⚠ Failed: {{ view.error }}</p>
+		<div class="mt-3 bg-alert-coral-surface text-ink rounded-lg px-3 py-2 text-sm" role="status">
+			<p class="m-0">⚠ This search couldn't finish. {{ view.error }}</p>
+			<p class="m-0 mt-1"><a href="/" class="text-ink underline">Start a new search</a></p>
+		</div>
 		{% endif %}
 		{% for w in view.warnings %}
 		<p class="mt-2 bg-alert-coral-surface text-ink rounded-lg px-3 py-2 text-sm" role="status">⚠ {{ w }}</p>

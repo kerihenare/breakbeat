@@ -1,0 +1,37 @@
+{# Shared search rail: the front door (search form) + recent-jobs history.
+   Used by both home.njk and job.njk so every surface is the same rail + #results
+   pane. Both the form and the recent rows target #results, which each page
+   provides. Expects `recent` (may be empty). #}
+<aside class="bg-newsprint-muted border-r border-border-hair p-5 lg:overflow-y-auto">
+	<form
+		hx-post="/jobs"
+		hx-target="#results"
+		hx-swap="innerHTML"
+		method="post"
+		action="/jobs"
+		class="grid gap-3"
+	>
+		<h2 class="text-base font-semibold m-0">Track a company</h2>
+		<label class="grid gap-1 text-sm font-medium">Company name
+			<input type="text" name="companyName" placeholder="Acme" required
+				class="bg-page-white border border-border-muted rounded-lg px-3 py-2 font-normal" />
+		</label>
+		<label class="grid gap-1 text-sm font-medium">Homepage URL
+			<input type="url" name="homepageUrl" placeholder="https://acme.com"
+				class="bg-page-white border border-border-muted rounded-lg px-3 py-2 font-normal" />
+		</label>
+		<button type="submit"
+			class="bg-ink text-page-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-ink-soft cursor-pointer">
+			Start search
+		</button>
+		<p class="text-text-muted text-xs m-0">The homepage URL tells us which company you mean.</p>
+	</form>
+
+	<h2 class="text-sm font-medium text-text-muted mt-6 mb-2 uppercase tracking-wide">Recent jobs</h2>
+	<!-- Bounded + scrollable on mobile so a long history never pushes the
+	     results pane below the fold; the rail itself scrolls on lg+. -->
+	<ul id="recent-jobs" class="list-none p-0 m-0 grid gap-1 max-h-72 overflow-y-auto lg:max-h-none lg:overflow-visible">
+		{% for j in recent %}{% include "_recent_row.njk" %}{% else %}
+		<li class="text-text-muted text-sm px-2 py-1.5">No searches yet.</li>{% endfor %}
+	</ul>
+</aside>

@@ -1,42 +1,21 @@
 {% extends "layout.njk" %}
 {% block content %}
 <div class="lg:grid lg:grid-cols-[320px_1fr] lg:h-[calc(100vh-57px)]">
-	<!-- Search rail -->
-	<aside class="bg-newsprint-muted border-r border-border-hair p-5 lg:overflow-y-auto">
-		<form
-			hx-post="/jobs"
-			hx-target="#results"
-			hx-swap="innerHTML"
-			method="post"
-			action="/jobs"
-			class="grid gap-3"
-		>
-			<h1 class="text-base font-semibold m-0">Track a company</h1>
-			<label class="grid gap-1 text-sm font-medium">Company name
-				<input type="text" name="companyName" placeholder="Acme"
-					class="bg-page-white border border-border-muted rounded-lg px-3 py-2 font-normal" />
-			</label>
-			<label class="grid gap-1 text-sm font-medium">Homepage URL
-				<input type="url" name="homepageUrl" placeholder="https://acme.com"
-					class="bg-page-white border border-border-muted rounded-lg px-3 py-2 font-normal" />
-			</label>
-			<button type="submit"
-				class="bg-ink text-page-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-ink-soft cursor-pointer">
-				Start search
-			</button>
-			<p class="text-text-muted text-xs m-0">Provide the URL for unambiguous results.</p>
-		</form>
-
-		<h2 class="text-sm font-medium text-text-muted mt-6 mb-2 uppercase tracking-wide">Recent jobs</h2>
-		<ul id="recent-jobs" class="list-none p-0 m-0 grid gap-1">
-			{% for j in recent %}{% include "_recent_row.njk" %}{% endfor %}
-		</ul>
-	</aside>
+	{% include "_search_rail.njk" %}
 
 	<!-- Results pane -->
 	<section id="results" class="p-6 lg:overflow-y-auto">
-		<div class="text-text-muted max-w-prose mt-12 text-center mx-auto">
-			<p class="text-lg">Name a company to start tracking its coverage.</p>
+		<div class="max-w-prose mt-12 mx-auto">
+			<h1 class="text-lg font-semibold text-ink m-0">See who's talking about a company</h1>
+			<p class="text-text-muted mt-2">
+				Enter a company name and homepage URL on the left. Breakbeat searches the last 36 months
+				and groups what it finds by type: news, trade press, press releases, podcasts, blog posts,
+				newsletters, and social posts, each one linked to its original source.
+			</p>
+			<p class="text-text-muted mt-2">
+				Coverage from the company's own channels, aggregators, and store pages is filtered out and
+				listed separately, so what's left is what others are saying.
+			</p>
 		</div>
 	</section>
 </div>

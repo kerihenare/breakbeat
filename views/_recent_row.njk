@@ -4,9 +4,12 @@
 		hx-get="/jobs/{{ j.id | urlencode }}"
 		hx-target="#results"
 		hx-push-url="true"
-		class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md no-underline text-ink hover:bg-newsprint-subtle"
+		class="block px-2 py-1.5 rounded-md no-underline text-ink hover:bg-newsprint-subtle"
 	>
-		<span class="truncate">{{ j.companyName }}</span>
-		<span class="mono text-xs shrink-0">{{ j.status }}</span>
+		<span class="flex items-center justify-between gap-2">
+			<span class="truncate">{{ j.companyName }}</span>
+			<bb-job-status status="{{ j.status }}" quiet class="shrink-0"></bb-job-status>
+		</span>
+		<span class="mono text-xs block mt-0.5">{{ j.createdAt }}</span>
 	</a>
 </li>

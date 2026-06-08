@@ -8,7 +8,8 @@
 	--color-ink-soft: #3f3e3e;
 	--color-ink-deep: #0f1010;
 	--color-press-blue: #1a8cd6;
-	--color-press-blue-deep: #1071b3;
+	--color-press-blue-deep: #0d66a6;
+	--color-press-blue-deeper: #0a5990;
 	--color-focus-blue: #46bbff;
 	--color-page-white: #fdfdfc;
 	--color-newsprint: #efe8e3;
@@ -24,6 +25,7 @@
 	--color-alert-coral: #e85a68;
 	--color-alert-coral-surface: #fec2c8;
 	--color-aether-gold: #f0be0a;
+	--color-aether-gold-deep: #8a6d05;
 
 	--font-sans: "FK Grotesk", system-ui, -apple-system, "Segoe UI", Roboto,
 		"Helvetica Neue", sans-serif;
@@ -42,11 +44,13 @@
 		font-family: var(--font-sans);
 		line-height: 1.5;
 	}
+	/* Links use the deep press-blue: the lighter accent (#1a8cd6) only
+	   reaches 3:1 on newsprint, below AA for body-size text. */
 	a {
-		color: var(--color-press-blue);
+		color: var(--color-press-blue-deep);
 	}
 	a:hover {
-		color: var(--color-press-blue-deep);
+		color: var(--color-press-blue-deeper);
 	}
 	:focus-visible {
 		outline: 2px solid var(--color-focus-blue);
@@ -88,11 +92,40 @@
 		}
 	}
 
+	/* Quiet status (bb-job-status[quiet], recent-jobs rail): dot + muted label.
+	   Colour rides the dot, the text label keeps meaning non-colour-only. */
+	.bb-status-quiet {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 0.8125rem;
+		color: var(--color-text-muted);
+		white-space: nowrap;
+	}
+	.bb-status-quiet .bb-dot {
+		width: 7px;
+		height: 7px;
+		flex: none;
+		border-radius: 9999px;
+		background: var(--color-border-muted);
+	}
+	.bb-status-quiet .bb-dot.status-done {
+		background: var(--color-live-green);
+	}
+	.bb-status-quiet .bb-dot.status-done_with_warnings,
+	.bb-status-quiet .bb-dot.status-failed {
+		background: var(--color-alert-coral);
+	}
+	.bb-status-quiet .bb-dot.is-running {
+		background: var(--color-press-blue);
+		animation: bb-pulse 1.4s ease-in-out infinite;
+	}
+
 	/* Filter tabs (bb-result-filter, light DOM) */
 	.bb-filter button {
 		font: inherit;
 		font-size: 0.875rem;
-		padding: 4px 10px;
+		padding: 7px 12px;
 		margin-right: 4px;
 		border-radius: var(--radius-md);
 		border: 1px solid transparent;
@@ -109,7 +142,8 @@
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.bb-status.is-running {
+		.bb-status.is-running,
+		.bb-status-quiet .bb-dot.is-running {
 			animation: none;
 		}
 	}

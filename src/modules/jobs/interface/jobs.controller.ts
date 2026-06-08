@@ -30,10 +30,22 @@ type RecentRow = {
 	id: string;
 	companyName: string;
 	status: string;
+	createdAt: string;
 };
 
+/** Mono-friendly `YYYY-MM-DD HH:mm` stamp; lets two same-name runs be told apart. */
+function formatStamp(d: Date): string {
+	const iso = d.toISOString();
+	return `${iso.slice(0, 10)} ${iso.slice(11, 16)}`;
+}
+
 function toRecent(job: Job): RecentRow {
-	return { companyName: job.companyName, id: job.id, status: job.status };
+	return {
+		companyName: job.companyName,
+		createdAt: formatStamp(job.createdAt),
+		id: job.id,
+		status: job.status,
+	};
 }
 
 function isHtmx(req: Request): boolean {
@@ -137,7 +149,17 @@ export class JobsController {
 		}
 		const results = await this.results.findAllByJob(id);
 		const view = buildJobView(job, results);
-		const template = isHtmx(req) ? "_job_live.njk" : "job.njk";
-		res.type("html").send(this.view.render(template, { view }));
+		// HTMX swaps only the pane; a full page load also needs the rail's
+		// recent-jobs history so the job page is the same surface as home.
+		if (isHtmx(req)) {
+			res.type("html").send(this.view.render("_job_live.njk", { view }));
+			return;
+		}
+		const recent = await this.jobs.listRecent(20);
+		res
+			.type("html")
+			.send(
+				this.view.render("job.njk", { recent: recent.map(toRecent), view }),
+			);
 	}
 }
