@@ -1,4 +1,5 @@
 {
+	"//watchOptions": "Poll instead of relying on fs events: `nest start --watch` runs in the app container over a macOS bind mount, where inotify events don't propagate and edits otherwise never trigger a rebuild. Scoped here (not the base tsconfig) so IDE TS servers keep using native fs events.",
 	"exclude": [
 		"node_modules",
 		"dist",
@@ -7,5 +8,10 @@
 		"drizzle.config.ts",
 		"src/client"
 	],
-	"extends": "./tsconfig.json"
+	"extends": "./tsconfig.json",
+	"watchOptions": {
+		"fallbackPolling": "fixedInterval",
+		"watchDirectory": "fixedPollingInterval",
+		"watchFile": "fixedPollingInterval"
+	}
 }

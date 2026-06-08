@@ -42,6 +42,10 @@ services:
 
   app:
     build: .
+    # init: true → tini as PID 1 forwards SIGTERM/SIGINT to the node tree, so
+    # `docker compose restart/stop` shuts the server down cleanly (and frees
+    # :3000) instead of waiting out the 10s kill timeout.
+    init: true
     command: sh -c "pnpm db:migrate && pnpm dev"
     environment:
       DATABASE_URL: postgres://breakbeat:breakbeat@postgres:5432/breakbeat

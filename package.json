@@ -14,7 +14,7 @@
     "build:client": "pnpm build:css && pnpm build:js",
     "build:css": "tailwindcss -i src/client/styles.css -o public/app.css --minify",
     "build:js": "esbuild src/client/components/index.ts --bundle --format=esm --minify --outfile=public/components.js",
-    "dev": "pnpm build:client && concurrently -k -n css,js,nest \"tailwindcss -i src/client/styles.css -o public/app.css --watch\" \"esbuild src/client/components/index.ts --bundle --format=esm --outfile=public/components.js --watch\" \"nest start --watch\"",
+    "dev": "pnpm build:client && (tsc -p tsconfig.build.json || true) && concurrently -k -n css,js,tsc,app \"tailwindcss -i src/client/styles.css -o public/app.css --watch\" \"esbuild src/client/components/index.ts --bundle --format=esm --outfile=public/components.js --watch\" \"tsc -w -p tsconfig.build.json\" \"node --watch dist/main.js\"",
     "start": "node dist/main.js",
     "worker": "nest start --entryFile worker --watch",
     "worker:start": "node dist/worker.js",
